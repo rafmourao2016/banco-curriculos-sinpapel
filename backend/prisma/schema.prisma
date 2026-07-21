@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// FASE 1 — Cadastro do candidato (implementado neste MVP)
+// ---------------------------------------------------------------------------
+
+model Candidato {
+  id                     String    @id @default(uuid())
+  nome                   String
+  cpf                    String    @unique
+  email                  String    @unique
+  telefone               String
+  dataNascimento         DateTime  @map("data_nascimento")
+  regiao                 String
+  escolaridade           Escolaridade
+  possuiCnh              Boolean   @default(false) @map("possui_cnh")
+  categoriaCnh           String?   @map("categoria_cnh")
+  senhaHash              String    @map("senha_hash")
+  ativo                  Boolean   @default(true)
+  dataCadastro           DateTime  @default(now()) @map("data_cadastro")
+  dataUltimaRevalidacao  DateTime  @default(now()) @map("data_ultima_revalidacao")
+
+  experiencias           Experiencia[]
+  formacoes              Formacao[]
+  habilidades            CandidatoHabilidade[]
+  statusContratacoes     StatusContratacao[]
+  logsVisualizacao       LogVisualizacao[]
+  notificacoes           Notificacao[]
+  termoConsentimento     TermoConsentimento?
+
+  @@map("candidatos")
+}
+
+enum Escolaridade {
+  FUNDAMENTAL_INCOMPLETO
+  FUNDAMENTAL_COMPLETO
+  MEDIO_INCOMPLETO
+  MEDIO_COMPLETO
+  SUPERIOR_INCOMPLETO
+  SUPERIOR_COMPLETO
+  POS_GRADUACAO
+}
+
+model Experiencia {
+  id           String    @id @default(uuid())
+  candidatoId  String    @map("candidato_id")
+  candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  cargo        String
+  area         String
+  dataInicio   DateTime  @map("data_inicio")
+  dataFim      DateTime? @map("data_fim")
+  descricao    String?
+
+  @@map("experiencias")
+}
+
+model Formacao {
+  id           String    @id @default(uuid())
+  candidatoId  String    @map("candidato_id")
+  candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  nivel        String
+  curso        String
+  instituicao  String
+  status       String // "concluído" | "cursando" | "trancado"
+
+  @@map("formacoes")
+}
+
+model TermoConsentimento {
+  id           String    @id @default(uuid())
+  candidatoId  String    @unique @map("candidato_id")
+  candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  versao       String
+  dataAceite   DateTime  @default(now()) @map("data_aceite")
+  ip           String
+
+  @@map("termos_consentimento")
+}
+
+// ---------------------------------------------------------------------------
+// FASE 3+ — Empresas, busca e status de contratação (modelado, não exposto ainda)
+// ---------------------------------------------------------------------------
+
+model Empresa {
+  id               String   @id @default(uuid())
+  razaoSocial      String   @map("razao_social")
+  cnpj             String   @unique
+  email            String   @unique
+  senhaHash        String   @map("senha_hash")
+  statusAprovacao  String   @default("pendente") @map("status_aprovacao")
+  twoFaAtivo       Boolean  @default(false) @map("two_fa_ativo")
+  twoFaSecret      String?  @map("two_fa_secret")
+
+  usuarios             UsuarioEmpresa[]
+  vagasNecessidade      VagaNecessidade[]
+  statusContratacoes    StatusContratacao[]
+  logsVisualizacao      LogVisualizacao[]
+
+  @@map("empresas")
+}
+
+model UsuarioEmpresa {
+  id         String   @id @default(uuid())
+  empresaId  String   @map("empresa_id")
+  empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nome       String
+  email      String   @unique
+  papel      String   @default("operador") // "admin_empresa" | "operador"
+
+  @@map("usuarios_empresa")
+}
+
+model VagaNecessidade {
+  id           String   @id @default(uuid())
+  empresaId    String   @map("empresa_id")
+  empresa      Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  area         String
+  requisitos   String
+  ativa        Boolean  @default(true)
+
+  @@map("vagas_necessidade")
+}
+
+model StatusContratacao {
+  id                String    @id @default(uuid())
+  candidatoId       String    @map("candidato_id")
+  candidato         Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  empresaId         String    @map("empresa_id")
+  empresa           Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  status            StatusCandidatura @default(CONTATADO)
+  dataAtualizacao   DateTime  @default(now()) @updatedAt @map("data_atualizacao")
+
+  @@map("status_contratacao")
+}
+
+enum StatusCandidatura {
+  CONTATADO
+  EM_PROCESSO_SELETIVO
+  CONTRATADO
+  NAO_COMPATIVEL
+}
+
+model LogVisualizacao {
+  id           String    @id @default(uuid())
+  candidatoId  String    @map("candidato_id")
+  candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  empresaId    String    @map("empresa_id")
+  empresa      Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  dataHora     DateTime  @default(now()) @map("data_hora")
+
+  @@map("logs_visualizacao")
+}
+
+model Notificacao {
+  id            String    @id @default(uuid())
+  candidatoId   String    @map("candidato_id")
+  candidato     Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  tipo          String // "revalidacao" | "alerta_reverso" | "geral"
+  canal         String // "whatsapp" | "email"
+  statusEnvio   String    @default("pendente") @map("status_envio")
+  dataEnvio     DateTime  @default(now()) @map("data_envio")
+
+  @@map("notificacoes")
+}
+
+model Habilidade {
+  id     String  @id @default(uuid())
+  nome   String  @unique
+
+  candidatos  CandidatoHabilidade[]
+
+  @@map("habilidades")
+}
+
+model CandidatoHabilidade {
+  candidatoId    String     @map("candidato_id")
+  candidato      Candidato  @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  habilidadeId   String     @map("habilidade_id")
+  habilidade     Habilidade @relation(fields: [habilidadeId], references: [id], onDelete: Cascade)
+
+  @@id([candidatoId, habilidadeId])
+  @@map("candidatos_habilidades")
+}
