@@ -6,6 +6,7 @@ import {
   IsDateString,
   IsEmail,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   MaxLength,
@@ -52,6 +53,11 @@ export class CriarCandidatoDto {
   @MaxLength(100)
   regiao: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(2)
+  uf?: string;
+
   @IsEnum(EscolaridadeDto)
   escolaridade: EscolaridadeDto;
 
@@ -63,8 +69,53 @@ export class CriarCandidatoDto {
   @MaxLength(5)
   categoriaCnh?: string;
 
+  @IsIn(['producao', 'manutencao', 'administrativo', 'logistica', 'qualidade', 'comercial', 'ti', 'engenharia', 'outra'])
+  areaPretendida: string;
+
   @IsString()
-  @MinLength(8)
+  @MaxLength(120)
+  cargoPretendido: string;
+
+  @IsIn(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000', 'a_combinar'])
+  pretensaoSalarial: string;
+
+  @IsBoolean()
+  experienciaSetorPapel: boolean;
+
+  @IsIn(['sem_experiencia', 'ate_1_ano', '1_3_anos', '3_5_anos', 'mais_5_anos'])
+  anosExperienciaTotal: string;
+
+  @IsArray()
+  @ArrayMaxSize(4)
+  @IsIn(['manha', 'tarde', 'noite', 'revezamento'], { each: true })
+  turnos: string[];
+
+  @IsBoolean()
+  inicioImediato: boolean;
+
+  @IsBoolean()
+  disponibilidadeMudanca: boolean;
+
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsString({ each: true })
+  cursosCertificacoes: string[];
+
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  idiomas: string[];
+
+  @IsBoolean()
+  pcd: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  pcdObservacao?: string;
+
+  @IsString()
+  @MinLength(8, { message: 'A senha deve ter no minimo 8 caracteres.' })
   @MaxLength(72)
   senha: string;
 

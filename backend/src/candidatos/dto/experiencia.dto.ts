@@ -1,6 +1,11 @@
 import { IsDateString, IsOptional, IsString, MaxLength } from 'class-validator';
 
 export class ExperienciaDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  empresa?: string;
+
   @IsString()
   @MaxLength(120)
   cargo: string;
@@ -18,6 +23,6 @@ export class ExperienciaDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(500)
+  @MaxLength(300)
   descricao?: string;
 }

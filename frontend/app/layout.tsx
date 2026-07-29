@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { SiteShell } from '../components/SiteShell';
 
 export const metadata: Metadata = {
   title: 'Banco de Currículos do SINPAPEL',
@@ -9,7 +10,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR">
-      <body className="bg-gray-50 text-gray-900">{children}</body>
+      <body className="bg-slate-50 text-slate-900">
+        <SiteShell>{children}</SiteShell>
+      </body>
     </html>
   );
 }

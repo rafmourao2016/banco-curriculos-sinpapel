@@ -1,0 +1,619 @@
+'use client';
+
+import { FormEvent, useMemo, useState } from 'react';
+import Link from 'next/link';
+
+type Experiencia = {
+  empresa?: string | null;
+  cargo: string;
+  area: string;
+  dataInicio: string;
+  dataFim?: string | null;
+  descricao?: string | null;
+};
+
+type Candidato = {
+  id: string;
+  nome: string;
+  cpf: string;
+  email: string;
+  telefone: string;
+  regiao: string;
+  uf?: string | null;
+  escolaridade: string;
+  possuiCnh: boolean;
+  categoriaCnh?: string | null;
+  areaPretendida?: string | null;
+  cargoPretendido?: string | null;
+  pretensaoSalarial?: string | null;
+  experienciaSetorPapel?: boolean | null;
+  anosExperienciaTotal?: string | null;
+  turnos: string[];
+  inicioImediato?: boolean | null;
+  disponibilidadeMudanca?: boolean | null;
+  cursosCertificacoes: string[];
+  idiomas: string[];
+  pcd?: boolean | null;
+  ativo: boolean;
+  dataCadastro: string;
+  dataUltimaRevalidacao: string;
+  experiencias: Experiencia[];
+  habilidades: string[];
+};
+
+type Empresa = {
+  id: string;
+  razaoSocial: string;
+  cnpj: string;
+  email: string;
+  statusAprovacao: string;
+};
+
+type LogAcesso = {
+  id: string;
+  dataHora: string;
+  empresa: { razaoSocial: string; email: string };
+  candidato: { nome: string; email: string };
+};
+
+type Indicadores = {
+  periodoMeses: number;
+  resumo: {
+    totalCandidatos: number;
+    ativos: number;
+    inativos: number;
+    totalEmpresas: number;
+    empresasAprovadas: number;
+    revalidacoesTotal: number;
+    revalidacoesConfirmadas: number;
+    taxaRevalidacao: number;
+  };
+  rankingUsoEmpresas: Array<{ empresaId: string; razaoSocial: string; email: string; visualizacoes: number }>;
+  contratacoesPorPeriodo: Array<{ periodo: string; total: number }>;
+};
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
+
+function formatarData(valor: string) {
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(valor));
+}
+
+export default function AdminPage() {
+  const [token, setToken] = useState('');
+  const [busca, setBusca] = useState('');
+  const [candidatos, setCandidatos] = useState<Candidato[]>([]);
+  const [erro, setErro] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(false);
+  const [consultado, setConsultado] = useState(false);
+  const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [logs, setLogs] = useState<LogAcesso[]>([]);
+  const [mensagem, setMensagem] = useState<string | null>(null);
+  const [atsKey, setAtsKey] = useState<string | null>(null);
+  const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
+  const [indicadores, setIndicadores] = useState<Indicadores | null>(null);
+
+  const totalAtivos = useMemo(() => candidatos.filter((candidato) => candidato.ativo).length, [candidatos]);
+
+  async function carregarCandidatos(event?: FormEvent) {
+    event?.preventDefault();
+    setErro(null);
+    setMensagem(null);
+    if (!token.trim()) {
+      setErro('Informe a chave administrativa.');
+      return;
+    }
+    setCarregando(true);
+
+    try {
+      const params = new URLSearchParams();
+      if (busca.trim()) params.set('q', busca.trim());
+
+      const res = await fetch(`${API_URL}/admin/candidatos?${params.toString()}`, {
+        headers: { 'x-admin-token': token },
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message ?? 'Nao foi possivel carregar os curriculos.');
+      }
+
+      setCandidatos(await res.json());
+      setConsultado(true);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function carregarEmpresas() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/empresas`, { headers: { 'x-admin-token': token } });
+      if (!res.ok) throw new Error('Nao foi possivel carregar empresas.');
+      setEmpresas(await res.json());
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function atualizarEmpresa(id: string, statusAprovacao: string) {
+    setErro(null);
+    setMensagem(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/empresas/${id}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({ statusAprovacao }),
+      });
+      if (!res.ok) throw new Error('Nao foi possivel atualizar a empresa.');
+      await carregarEmpresas();
+      setMensagem('Empresa atualizada.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    }
+  }
+
+  async function gerarChaveAts(id: string) {
+    setErro(null);
+    setMensagem(null);
+    setAtsKey(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/empresas/${id}/api-keys`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({ nome: 'ATS' }),
+      });
+      if (!res.ok) throw new Error('Nao foi possivel gerar chave ATS.');
+      const body = await res.json();
+      setAtsKey(body.apiKey);
+      setMensagem('Chave ATS gerada. Copie agora, ela nao sera exibida novamente.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    }
+  }
+
+  async function backfillEmbeddings() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/embeddings/backfill`, {
+        method: 'POST',
+        headers: { 'x-admin-token': token },
+      });
+      if (!res.ok) throw new Error('Nao foi possivel atualizar embeddings.');
+      const body = await res.json();
+      setMensagem(`Busca semantica atualizada. Curriculos processados: ${body.candidatosAtualizados ?? 0}.`);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function excluirCandidato(id: string) {
+    if (!confirm('Excluir definitivamente os dados deste candidato?')) return;
+    setErro(null);
+    setMensagem(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/candidatos/${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-token': token },
+      });
+      if (!res.ok) throw new Error('Nao foi possivel excluir o candidato.');
+      setCandidatos((atuais) => atuais.filter((candidato) => candidato.id !== id));
+      setMensagem('Dados excluidos conforme solicitacao LGPD.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    }
+  }
+
+  async function carregarLogs() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/logs`, { headers: { 'x-admin-token': token } });
+      if (!res.ok) throw new Error('Nao foi possivel carregar logs.');
+      setLogs(await res.json());
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function criarComunicacao(candidatoId: string) {
+    setErro(null);
+    setMensagem(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/comunicacoes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({ candidatoId, tipo: 'geral', canal: 'email' }),
+      });
+      if (!res.ok) throw new Error('Nao foi possivel registrar comunicacao.');
+      setMensagem('Comunicacao manual registrada como pendente.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    }
+  }
+
+  async function executarRevalidacao() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/jobs/revalidacao`, {
+        method: 'POST',
+        headers: { 'x-admin-token': token },
+      });
+      if (!res.ok) throw new Error('Nao foi possivel executar rotina.');
+      const body = await res.json();
+      setMensagem(`Rotina executada. Revalidacoes: ${body.revalidacoesCriadas ?? 0}. Inativados: ${body.curriculosInativados ?? 0}.`);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function carregarIndicadores() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/indicadores?meses=12`, { headers: { 'x-admin-token': token } });
+      if (!res.ok) throw new Error('Nao foi possivel carregar indicadores.');
+      setIndicadores(await res.json());
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function exportarIndicadores() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/indicadores/exportar?meses=12`, { headers: { 'x-admin-token': token } });
+      if (!res.ok) throw new Error('Nao foi possivel exportar indicadores.');
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'indicadores-sinpapel.xls';
+      link.click();
+      window.URL.revokeObjectURL(url);
+      setMensagem('Indicadores exportados.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-3 py-5 text-slate-950 sm:px-4 sm:py-6">
+      <div className="mx-auto max-w-7xl">
+        <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <Link
+                href="/"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-brand-600 hover:text-brand-700"
+              >
+                Voltar ao início
+              </Link>
+              <Link
+                href="/cadastro"
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50"
+              >
+                Fazer novo cadastro
+              </Link>
+            </div>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Curriculos cadastrados</h1>
+            <p className="mt-2 text-sm text-slate-600">Área para consultar os currículos recebidos pelo formulário público.</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3 sm:min-w-72">
+            <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase text-slate-500">Total listado</p>
+              <p className="mt-1 text-2xl font-semibold">{candidatos.length}</p>
+            </div>
+            <div className="min-w-0 rounded-lg border border-slate-200 bg-white p-4">
+              <p className="text-xs font-semibold uppercase text-slate-500">Ativos</p>
+              <p className="mt-1 text-2xl font-semibold">{totalAtivos}</p>
+            </div>
+          </div>
+        </header>
+
+        <form onSubmit={carregarCandidatos} className="mt-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[minmax(180px,260px)_1fr_auto] sm:p-4">
+          <label className="grid gap-1 text-sm font-semibold text-slate-700">
+            Senha do admin
+            <input
+              type="password"
+              required
+              minLength={8}
+              autoComplete="current-password"
+              value={token}
+              onChange={(event) => setToken(event.target.value)}
+              placeholder="Digite a chave administrativa"
+              className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
+            />
+          </label>
+          <label className="grid gap-1 text-sm font-semibold text-slate-700">
+            Buscar candidato
+            <input
+              value={busca}
+              onChange={(event) => setBusca(event.target.value)}
+              placeholder="Nome, cidade, cargo, área, habilidade, e-mail ou telefone"
+              className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={carregando || !token}
+            className="min-w-0 self-end rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {carregando ? 'Carregando...' : 'Consultar'}
+          </button>
+          <button type="button" onClick={() => setMostrarRecuperacao((atual) => !atual)} className="text-sm font-semibold text-brand-700 underline underline-offset-4 sm:col-span-3 sm:justify-self-start">
+            Esqueci a chave administrativa
+          </button>
+          {mostrarRecuperacao && <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700 sm:col-span-3">A chave administrativa nao e recuperada pela tela. Solicite ao responsavel pelo SINPAPEL a configuracao de uma nova chave segura.</div>}
+        </form>
+
+        {erro && (
+          <p role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {erro}
+          </p>
+        )}
+        {mensagem && (
+          <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+            {mensagem}
+          </p>
+        )}
+        {atsKey && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p className="font-semibold">Chave ATS gerada</p>
+            <p className="mt-1 break-all">{atsKey}</p>
+          </div>
+        )}
+
+        <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Indicadores executivos</h2>
+              <p className="text-sm text-slate-600">Uso, revalidacao e contratacoes dos ultimos 12 meses.</p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button onClick={carregarIndicadores} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                Atualizar indicadores
+              </button>
+              <button onClick={exportarIndicadores} disabled={!token || carregando} className="rounded-lg border border-brand-600 px-4 py-3 text-sm font-semibold text-brand-700 disabled:opacity-60">
+                Exportar Excel
+              </button>
+            </div>
+          </div>
+
+          {indicadores && (
+            <div className="mt-4 grid gap-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {[
+                  ['Curriculos ativos', indicadores.resumo.ativos],
+                  ['Curriculos inativos', indicadores.resumo.inativos],
+                  ['Empresas aprovadas', indicadores.resumo.empresasAprovadas],
+                  ['Taxa de revalidacao', `${indicadores.resumo.taxaRevalidacao}%`],
+                ].map(([label, value]) => (
+                  <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
+                    <p className="mt-1 text-2xl font-semibold">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <h3 className="font-semibold">Ranking de uso por empresa</h3>
+                  <div className="mt-3 grid gap-2">
+                    {indicadores.rankingUsoEmpresas.map((item) => (
+                      <div key={item.empresaId} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm">
+                        <span className="min-w-0 truncate">{item.razaoSocial}</span>
+                        <strong>{item.visualizacoes}</strong>
+                      </div>
+                    ))}
+                    {indicadores.rankingUsoEmpresas.length === 0 && <p className="text-sm text-slate-600">Sem visualizacoes no periodo.</p>}
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-slate-200 p-4">
+                  <h3 className="font-semibold">Contratacoes por periodo</h3>
+                  <div className="mt-3 grid gap-2">
+                    {indicadores.contratacoesPorPeriodo.map((item) => (
+                      <div key={item.periodo} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm">
+                        <span>{formatarData(item.periodo)}</span>
+                        <strong>{item.total}</strong>
+                      </div>
+                    ))}
+                    {indicadores.contratacoesPorPeriodo.length === 0 && <p className="text-sm text-slate-600">Sem contratacoes registradas no periodo.</p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+
+        <section className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Empresas</h2>
+                <p className="text-sm text-slate-600">Aprove ou reprove acessos de empresas.</p>
+              </div>
+              <button onClick={carregarEmpresas} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                Carregar empresas
+              </button>
+            </div>
+            <div className="mt-4 grid gap-2">
+              {empresas.map((empresa) => (
+                <div key={empresa.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold">{empresa.razaoSocial}</p>
+                  <p className="text-slate-600">{empresa.email} - {empresa.statusAprovacao}</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button onClick={() => atualizarEmpresa(empresa.id, 'aprovada')} className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white">Aprovar</button>
+                    <button onClick={() => atualizarEmpresa(empresa.id, 'reprovada')} className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred">Reprovar</button>
+                    <button onClick={() => gerarChaveAts(empresa.id)} className="rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700">Gerar chave ATS</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-semibold">Logs de acesso</h2>
+                <p className="text-sm text-slate-600">Visualizacoes e acoes feitas por empresas.</p>
+              </div>
+              <button onClick={carregarLogs} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                Carregar logs
+              </button>
+            </div>
+            <div className="mt-4 grid max-h-80 gap-2 overflow-auto">
+              {logs.map((log) => (
+                <div key={log.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                  <p className="font-semibold">{log.empresa.razaoSocial}</p>
+                  <p className="text-slate-600">Visualizou: {log.candidato.nome}</p>
+                  <p className="text-xs text-slate-500">{formatarData(log.dataHora)}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Rotina de revalidacao</h2>
+              <p className="text-sm text-slate-600">Registra alertas apos 90 dias e inativa curriculos sem resposta apos 120 dias.</p>
+            </div>
+            <button onClick={executarRevalidacao} disabled={!token || carregando} className="rounded-lg bg-singreen px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+              Executar agora
+            </button>
+            <button onClick={backfillEmbeddings} disabled={!token || carregando} className="rounded-lg border border-brand-600 px-4 py-3 text-sm font-semibold text-brand-700 disabled:opacity-60">
+              Atualizar busca semantica
+            </button>
+          </div>
+        </section>
+
+        <section className="mt-5 grid gap-3">
+          {candidatos.map((candidato) => {
+            const experiencia = candidato.experiencias[0];
+
+            return (
+              <article key={candidato.id} className="min-w-0 rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="min-w-0 text-xl font-semibold">{candidato.nome}</h2>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${candidato.ativo ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}>
+                        {candidato.ativo ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {candidato.cargoPretendido ?? experiencia?.cargo ?? 'Cargo nao informado'} - {candidato.areaPretendida ?? experiencia?.area ?? 'Area nao informada'} - {candidato.regiao}
+                      {candidato.uf ? `/${candidato.uf}` : ''}
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {candidato.inicioImediato && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Inicio imediato</span>}
+                      {candidato.experienciaSetorPapel && <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">Setor papel/embalagem</span>}
+                      {candidato.habilidades.map((habilidade) => (
+                        <span key={habilidade} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                          {habilidade}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button onClick={() => criarComunicacao(candidato.id)} className="rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700">
+                        Registrar comunicacao
+                      </button>
+                      <button onClick={() => excluirCandidato(candidato.id)} className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred">
+                        Excluir LGPD
+                      </button>
+                    </div>
+                  </div>
+
+                  <dl className="grid min-w-0 gap-2 text-sm text-slate-700 sm:grid-cols-2 lg:min-w-[420px]">
+                    <div>
+                      <dt className="font-semibold text-slate-500">E-mail</dt>
+                      <dd>{candidato.email}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Telefone</dt>
+                      <dd>{candidato.telefone}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">CPF</dt>
+                      <dd>{candidato.cpf}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Cadastro</dt>
+                      <dd>{formatarData(candidato.dataCadastro)}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Escolaridade</dt>
+                      <dd>{candidato.escolaridade.replaceAll('_', ' ')}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Pretensão</dt>
+                      <dd>{candidato.pretensaoSalarial?.replaceAll('_', ' ') ?? 'Nao informada'}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Experiência total</dt>
+                      <dd>{candidato.anosExperienciaTotal?.replaceAll('_', ' ') ?? 'Nao informada'}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Turnos</dt>
+                      <dd>{candidato.turnos?.length ? candidato.turnos.join(', ') : 'Nao informado'}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">Mudança</dt>
+                      <dd>{candidato.disponibilidadeMudanca ? 'Disponivel' : 'Nao informado'}</dd>
+                    </div>
+                    <div>
+                      <dt className="font-semibold text-slate-500">CNH</dt>
+                      <dd>{candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Nao'}</dd>
+                    </div>
+                  </dl>
+                </div>
+
+                {(experiencia?.empresa || experiencia?.descricao || candidato.cursosCertificacoes?.length || candidato.idiomas?.length || candidato.pcd) && (
+                  <div className="mt-4 grid gap-3 rounded-lg bg-slate-50 p-3 text-sm leading-6 text-slate-700 sm:grid-cols-2">
+                    {experiencia?.empresa && <p><strong>Empresa:</strong> {experiencia.empresa}</p>}
+                    {experiencia?.descricao && <p><strong>Atividades:</strong> {experiencia.descricao}</p>}
+                    {candidato.cursosCertificacoes?.length > 0 && <p><strong>Cursos:</strong> {candidato.cursosCertificacoes.join(', ')}</p>}
+                    {candidato.idiomas?.length > 0 && <p><strong>Idiomas:</strong> {candidato.idiomas.join(', ')}</p>}
+                    {candidato.pcd && <p><strong>PCD:</strong> Sim</p>}
+                  </div>
+                )}
+              </article>
+            );
+          })}
+
+          {consultado && candidatos.length === 0 && !erro && (
+            <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
+              Nenhum curriculo encontrado.
+            </div>
+          )}
+        </section>
+      </div>
+    </main>
+  );
+}

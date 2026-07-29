@@ -3,8 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ---------------------------------------------------------------------------
@@ -12,18 +13,33 @@ datasource db {
 // ---------------------------------------------------------------------------
 
 model Candidato {
-  id                     String    @id @default(uuid())
+  id                     String    @id @default(uuid()) @db.Uuid
   nome                   String
   cpf                    String    @unique
   email                  String    @unique
   telefone               String
   dataNascimento         DateTime  @map("data_nascimento")
   regiao                 String
+  uf                     String?
   escolaridade           Escolaridade
   possuiCnh              Boolean   @default(false) @map("possui_cnh")
   categoriaCnh           String?   @map("categoria_cnh")
+  areaPretendida         String?   @map("area_pretendida")
+  cargoPretendido        String?   @map("cargo_pretendido")
+  pretensaoSalarial      String?   @map("pretensao_salarial")
+  experienciaSetorPapel  Boolean?  @map("experiencia_setor_papel")
+  anosExperienciaTotal   String?   @map("anos_experiencia_total")
+  turnos                 String[]  @default([])
+  inicioImediato         Boolean?  @map("inicio_imediato")
+  disponibilidadeMudanca Boolean?  @map("disponibilidade_mudanca")
+  cursosCertificacoes    String[]  @default([]) @map("cursos_certificacoes")
+  idiomas                String[]  @default([])
+  pcd                    Boolean?
+  pcdObservacao          String?   @map("pcd_observacao")
+  embedding              Unsupported("vector")?
   senhaHash              String    @map("senha_hash")
   ativo                  Boolean   @default(true)
+  dataInativacao         DateTime? @map("data_inativacao")
   dataCadastro           DateTime  @default(now()) @map("data_cadastro")
   dataUltimaRevalidacao  DateTime  @default(now()) @map("data_ultima_revalidacao")
 
@@ -49,9 +65,10 @@ enum Escolaridade {
 }
 
 model Experiencia {
-  id           String    @id @default(uuid())
-  candidatoId  String    @map("candidato_id")
+  id           String    @id @default(uuid()) @db.Uuid
+  candidatoId  String    @map("candidato_id") @db.Uuid
   candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  empresa      String?
   cargo        String
   area         String
   dataInicio   DateTime  @map("data_inicio")
@@ -62,20 +79,21 @@ model Experiencia {
 }
 
 model Formacao {
-  id           String    @id @default(uuid())
-  candidatoId  String    @map("candidato_id")
+  id           String    @id @default(uuid()) @db.Uuid
+  candidatoId  String    @map("candidato_id") @db.Uuid
   candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
   nivel        String
   curso        String
   instituicao  String
   status       String // "concluído" | "cursando" | "trancado"
+  ano          Int?
 
   @@map("formacoes")
 }
 
 model TermoConsentimento {
-  id           String    @id @default(uuid())
-  candidatoId  String    @unique @map("candidato_id")
+  id           String    @id @default(uuid()) @db.Uuid
+  candidatoId  String    @unique @map("candidato_id") @db.Uuid
   candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
   versao       String
   dataAceite   DateTime  @default(now()) @map("data_aceite")
@@ -89,7 +107,7 @@ model TermoConsentimento {
 // ---------------------------------------------------------------------------
 
 model Empresa {
-  id               String   @id @default(uuid())
+  id               String   @id @default(uuid()) @db.Uuid
   razaoSocial      String   @map("razao_social")
   cnpj             String   @unique
   email            String   @unique
@@ -102,13 +120,27 @@ model Empresa {
   vagasNecessidade      VagaNecessidade[]
   statusContratacoes    StatusContratacao[]
   logsVisualizacao      LogVisualizacao[]
+  apiKeys               EmpresaApiKey[]
 
   @@map("empresas")
 }
 
+model EmpresaApiKey {
+  id          String   @id @default(uuid()) @db.Uuid
+  empresaId   String   @map("empresa_id") @db.Uuid
+  empresa     Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
+  nome        String
+  tokenPrefix String   @map("token_prefix")
+  tokenHash   String   @map("token_hash")
+  ativo       Boolean  @default(true)
+  dataCriacao DateTime @default(now()) @map("data_criacao")
+
+  @@map("empresas_api_keys")
+}
+
 model UsuarioEmpresa {
-  id         String   @id @default(uuid())
-  empresaId  String   @map("empresa_id")
+  id         String   @id @default(uuid()) @db.Uuid
+  empresaId  String   @map("empresa_id") @db.Uuid
   empresa    Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   nome       String
   email      String   @unique
@@ -118,8 +150,8 @@ model UsuarioEmpresa {
 }
 
 model VagaNecessidade {
-  id           String   @id @default(uuid())
-  empresaId    String   @map("empresa_id")
+  id           String   @id @default(uuid()) @db.Uuid
+  empresaId    String   @map("empresa_id") @db.Uuid
   empresa      Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   area         String
   requisitos   String
@@ -129,14 +161,17 @@ model VagaNecessidade {
 }
 
 model StatusContratacao {
-  id                String    @id @default(uuid())
-  candidatoId       String    @map("candidato_id")
+  id                String    @id @default(uuid()) @db.Uuid
+  candidatoId       String    @map("candidato_id") @db.Uuid
   candidato         Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
-  empresaId         String    @map("empresa_id")
+  empresaId         String    @map("empresa_id") @db.Uuid
   empresa           Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   status            StatusCandidatura @default(CONTATADO)
+  dataAdmissao      DateTime? @map("data_admissao")
+  comentario        String?
   dataAtualizacao   DateTime  @default(now()) @updatedAt @map("data_atualizacao")
 
+  @@unique([candidatoId, empresaId])
   @@map("status_contratacao")
 }
 
@@ -148,10 +183,10 @@ enum StatusCandidatura {
 }
 
 model LogVisualizacao {
-  id           String    @id @default(uuid())
-  candidatoId  String    @map("candidato_id")
+  id           String    @id @default(uuid()) @db.Uuid
+  candidatoId  String    @map("candidato_id") @db.Uuid
   candidato    Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
-  empresaId    String    @map("empresa_id")
+  empresaId    String    @map("empresa_id") @db.Uuid
   empresa      Empresa   @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   dataHora     DateTime  @default(now()) @map("data_hora")
 
@@ -159,20 +194,25 @@ model LogVisualizacao {
 }
 
 model Notificacao {
-  id            String    @id @default(uuid())
-  candidatoId   String    @map("candidato_id")
+  id            String    @id @default(uuid()) @db.Uuid
+  candidatoId   String    @map("candidato_id") @db.Uuid
   candidato     Candidato @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
   tipo          String // "revalidacao" | "alerta_reverso" | "geral"
   canal         String // "whatsapp" | "email"
   statusEnvio   String    @default("pendente") @map("status_envio")
   dataEnvio     DateTime  @default(now()) @map("data_envio")
+  tokenHash     String?   @unique @map("token_hash")
+  expiraEm      DateTime? @map("expira_em")
+  usadoEm       DateTime? @map("usado_em")
+  erroEnvio     String?   @map("erro_envio")
 
   @@map("notificacoes")
 }
 
 model Habilidade {
-  id     String  @id @default(uuid())
-  nome   String  @unique
+  id        String                 @id @default(uuid()) @db.Uuid
+  nome      String                 @unique
+  embedding Unsupported("vector")?
 
   candidatos  CandidatoHabilidade[]
 
@@ -180,11 +220,24 @@ model Habilidade {
 }
 
 model CandidatoHabilidade {
-  candidatoId    String     @map("candidato_id")
+  candidatoId    String     @map("candidato_id") @db.Uuid
   candidato      Candidato  @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
-  habilidadeId   String     @map("habilidade_id")
+  habilidadeId   String     @map("habilidade_id") @db.Uuid
   habilidade     Habilidade @relation(fields: [habilidadeId], references: [id], onDelete: Cascade)
 
   @@id([candidatoId, habilidadeId])
   @@map("candidatos_habilidades")
+}
+
+model RecuperacaoSenha {
+  id        String    @id @default(uuid()) @db.Uuid
+  email     String
+  tipo      String
+  tokenHash String    @unique @map("token_hash")
+  expiraEm  DateTime  @map("expira_em")
+  usadoEm   DateTime? @map("usado_em")
+  criadoEm  DateTime  @default(now()) @map("criado_em")
+
+  @@index([email, tipo])
+  @@map("recuperacoes_senha")
 }

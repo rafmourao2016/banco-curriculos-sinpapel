@@ -1,0 +1,4 @@
+.vercel
+.admin-token.tmp
+.ats-key.tmp
+.env.vercel

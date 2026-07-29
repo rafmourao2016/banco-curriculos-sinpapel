@@ -1,0 +1,29 @@
+name: Supabase encrypted backup
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 6 * * *'
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client openssl
+      - name: Create encrypted backup
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          mkdir -p backups
+          PLAIN="backups/sinpapel-$(date +%Y%m%d-%H%M%S).dump"
+          pg_dump "$DIRECT_URL" --format=custom --file="$PLAIN"
+          openssl enc -aes-256-cbc -salt -pbkdf2 -in "$PLAIN" -out "$PLAIN.enc" -pass "pass:$BACKUP_PASSPHRASE"
+          rm "$PLAIN"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: encrypted-supabase-backup
+          path: backups/*.enc
+          retention-days: 30

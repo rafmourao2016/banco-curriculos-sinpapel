@@ -2,6 +2,13 @@ import { CadastroFormValues } from './cadastroSchema';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+function listaPorVirgula(valor?: string) {
+  return (valor ?? '')
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export async function cadastrarCandidato(dados: CadastroFormValues) {
   const payload = {
     nome: dados.nome,
@@ -10,19 +17,43 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
     telefone: dados.telefone,
     dataNascimento: dados.dataNascimento,
     regiao: dados.regiao,
+    uf: dados.uf.toUpperCase(),
     escolaridade: dados.escolaridade,
     possuiCnh: dados.possuiCnh,
     categoriaCnh: dados.categoriaCnh,
+    areaPretendida: dados.areaPretendida,
+    cargoPretendido: dados.cargoPretendido,
+    pretensaoSalarial: dados.pretensaoSalarial,
+    experienciaSetorPapel: dados.experienciaSetorPapel,
+    anosExperienciaTotal: dados.anosExperienciaTotal,
+    turnos: dados.turnos,
+    inicioImediato: dados.inicioImediato,
+    disponibilidadeMudanca: dados.disponibilidadeMudanca,
+    cursosCertificacoes: listaPorVirgula(dados.cursosCertificacoes),
+    idiomas: listaPorVirgula(dados.idiomas),
+    pcd: dados.pcd,
+    pcdObservacao: dados.pcdObservacao?.trim() || undefined,
     senha: dados.senha,
     experiencias: [
       {
+        empresa: dados.empresaExperiencia?.trim() || undefined,
         cargo: dados.cargoAtual,
         area: dados.areaAtual,
-        dataInicio: dados.dataNascimento, // placeholder simples para o MVP
+        dataInicio: dados.dataInicioExperiencia,
+        dataFim: dados.dataFimExperiencia || undefined,
+        descricao: dados.descricaoExperiencia?.trim() || undefined,
       },
     ],
-    formacoes: [],
-    habilidades: dados.habilidades.split(',').map((h) => h.trim()).filter(Boolean),
+    formacoes: [
+      {
+        nivel: dados.escolaridade,
+        curso: dados.cursoFormacao,
+        instituicao: dados.instituicaoFormacao,
+        status: dados.statusFormacao,
+        ano: dados.anoFormacao,
+      },
+    ],
+    habilidades: listaPorVirgula(dados.habilidades),
     aceiteTermoLgpd: dados.aceiteTermoLgpd,
   };
 
