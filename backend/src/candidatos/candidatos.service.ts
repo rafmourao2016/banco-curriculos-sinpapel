@@ -9,9 +9,36 @@ import { gerarEmbedding, vetorPg } from '../common/embedding';
 
 @Injectable()
 export class CandidatosService {
+  private cadastrosAtivos = 0;
+  private readonly filaCadastro: Array<() => void> = [];
+  private readonly concorrenciaCadastro = Math.max(
+    1,
+    Math.min(Number(process.env.CANDIDATE_REGISTRATION_CONCURRENCY) || 5, 20),
+  );
+
   constructor(private readonly prisma: PrismaService) {}
 
   async cadastrar(dto: CriarCandidatoDto, ip: string) {
+    return this.executarCadastroNaFila(() => this.cadastrarNoBanco(dto, ip));
+  }
+
+  private async executarCadastroNaFila<T>(tarefa: () => Promise<T>) {
+    if (this.cadastrosAtivos >= this.concorrenciaCadastro) {
+      await new Promise<void>((resolve) => this.filaCadastro.push(resolve));
+    }
+
+    this.cadastrosAtivos += 1;
+
+    try {
+      return await tarefa();
+    } finally {
+      this.cadastrosAtivos -= 1;
+      const proximo = this.filaCadastro.shift();
+      if (proximo) proximo();
+    }
+  }
+
+  private async cadastrarNoBanco(dto: CriarCandidatoDto, ip: string) {
     if (!dto.aceiteTermoLgpd) {
       throw new BadRequestException('O aceite do termo de consentimento LGPD é obrigatório.');
     }

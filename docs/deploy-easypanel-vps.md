@@ -30,6 +30,7 @@ APP_URL=https://sinpapel.vercel.app
 API_PUBLIC_URL=https://api.seudominio.com
 CORS_ORIGIN=https://sinpapel.vercel.app
 PORT=3001
+CANDIDATE_REGISTRATION_CONCURRENCY=5
 RESEND_API_KEY=
 EMAIL_FROM=
 BACKUP_PASSPHRASE=
