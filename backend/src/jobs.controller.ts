@@ -1,11 +1,14 @@
 import { Controller, Get, Headers, Post, Query } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
-import { Resend } from 'resend';
 import { PrismaService } from './common/prisma.service';
+import { EmailService } from './common/email.service';
 
 @Controller('jobs')
 export class JobsController {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   @Post('revalidacao')
   executarManual(@Headers('x-admin-token') token: string | undefined) {
@@ -105,24 +108,13 @@ export class JobsController {
       },
     });
 
-    if (!process.env.RESEND_API_KEY) {
-      await this.prisma.notificacao.update({
-        where: { id: notificacao.id },
-        data: {
-          statusEnvio: 'erro_configuracao_email',
-          erroEnvio: 'RESEND_API_KEY nao configurada.',
-        },
-      });
-      return 'erro_configuracao_email';
-    }
-
     const apiBaseUrl = (process.env.API_PUBLIC_URL || process.env.APP_URL || '').replace(/\/$/, '');
     if (!apiBaseUrl) {
       await this.prisma.notificacao.update({
         where: { id: notificacao.id },
         data: {
           statusEnvio: 'erro_configuracao_email',
-          erroEnvio: 'API_PUBLIC_URL ou APP_URL nao configurada.',
+          erroEnvio: 'API_PUBLIC_URL ou APP_URL não configurada.',
         },
       });
       return 'erro_configuracao_email';
@@ -132,17 +124,11 @@ export class JobsController {
     const removerUrl = `${apiBaseUrl}/candidatos/revalidacao/remover?token=${encodeURIComponent(token)}`;
 
     try {
-      const resend = new Resend(process.env.RESEND_API_KEY);
-      const envio = await resend.emails.send({
-        from: process.env.EMAIL_FROM ?? 'SINPAPEL <noreply@seudominio.com>',
+      await this.emailService.send({
         to: candidato.email,
-        subject: 'Confirme a disponibilidade do seu curriculo - SINPAPEL',
+        subject: 'Confirme a disponibilidade do seu currículo - SINPAPEL',
         html: this.emailRevalidacaoHtml(candidato.nome, confirmarUrl, removerUrl),
       });
-
-      if (envio.error) {
-        throw new Error(envio.error.message);
-      }
 
       await this.prisma.notificacao.update({
         where: { id: notificacao.id },

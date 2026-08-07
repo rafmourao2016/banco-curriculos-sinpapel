@@ -8,6 +8,7 @@ import { EmpresasModule } from './empresas/empresas.module';
 import { JobsController } from './jobs.controller';
 import { PrismaService } from './common/prisma.service';
 import { AtsModule } from './ats/ats.module';
+import { EmailService } from './common/email.service';
 
 @Module({
   imports: [
@@ -19,6 +20,6 @@ import { AtsModule } from './ats/ats.module';
     AtsModule,
   ],
   controllers: [HealthController, JobsController],
-  providers: [PrismaService],
+  providers: [PrismaService, EmailService],
 })
 export class AppModule {}
