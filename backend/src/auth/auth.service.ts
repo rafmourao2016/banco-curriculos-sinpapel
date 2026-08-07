@@ -58,6 +58,25 @@ export class AuthService {
     return { mensagem: 'Senha alterada com sucesso. Agora você já pode entrar.' };
   }
 
+  async validarRecuperacao(token: string, tipo: 'candidato' | 'empresa') {
+    const tokenHash = createHash('sha256').update(token ?? '').digest('hex');
+    const recuperacao = await this.prisma.recuperacaoSenha.findUnique({ where: { tokenHash } });
+
+    if (!recuperacao || recuperacao.tipo !== tipo) {
+      return { valido: false, mensagem: 'Link de recuperação inválido.' };
+    }
+
+    if (recuperacao.usadoEm) {
+      return { valido: false, mensagem: 'Este link de recuperação já foi usado.' };
+    }
+
+    if (recuperacao.expiraEm <= new Date()) {
+      return { valido: false, mensagem: 'Este link de recuperação expirou. Solicite um novo link.' };
+    }
+
+    return { valido: true, mensagem: 'Link válido.' };
+  }
+
   async loginCandidato(email: string, senha: string) {
     const candidato = await this.prisma.candidato.findUnique({ where: { email } });
     if (!candidato) throw new UnauthorizedException('Credenciais inválidas.');

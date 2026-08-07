@@ -18,6 +18,12 @@ export class AuthController {
     return this.authService.redefinirSenha(body.token, body.tipo, body.senha);
   }
 
+  @Post('validar-recuperacao')
+  @HttpCode(200)
+  validarRecuperacao(@Body() body: { token: string; tipo: 'candidato' | 'empresa' }) {
+    return this.authService.validarRecuperacao(body.token, body.tipo);
+  }
+
   @Post('candidato/login')
   @HttpCode(200)
   login(@Body() dto: LoginDto) {
