@@ -90,8 +90,46 @@ export default function AdminPage() {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [atsKey, setAtsKey] = useState<string | null>(null);
   const [indicadores, setIndicadores] = useState<Indicadores | null>(null);
+  const [autenticado, setAutenticado] = useState(false);
 
   const totalAtivos = useMemo(() => candidatos.filter((candidato) => candidato.ativo).length, [candidatos]);
+
+  async function acessarPainel(event: FormEvent) {
+    event.preventDefault();
+    setErro(null);
+    setMensagem(null);
+
+    if (!token.trim()) {
+      setErro('Informe a chave administrativa.');
+      return;
+    }
+
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/indicadores?meses=12`, { headers: { 'x-admin-token': token } });
+      if (!res.ok) throw new Error('Chave administrativa inválida.');
+      setIndicadores(await res.json());
+      setAutenticado(true);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  function sairPainel() {
+    setAutenticado(false);
+    setToken('');
+    setBusca('');
+    setCandidatos([]);
+    setEmpresas([]);
+    setLogs([]);
+    setIndicadores(null);
+    setAtsKey(null);
+    setErro(null);
+    setMensagem(null);
+    setConsultado(false);
+  }
 
   async function carregarCandidatos(event?: FormEvent) {
     event?.preventDefault();
@@ -299,6 +337,55 @@ export default function AdminPage() {
     }
   }
 
+  if (!autenticado) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-paper px-4 py-8 text-slate-950">
+        <section className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/70">
+          <Link href="/" className="text-sm font-semibold text-brand-700 underline underline-offset-4">
+            Voltar ao início
+          </Link>
+
+          <div className="mt-8">
+            <p className="text-xs font-bold uppercase tracking-[0.2em] text-sinred">SINPAPEL Minas Gerais</p>
+            <h1 className="mt-3 text-2xl font-semibold tracking-tight">Acesso administrativo</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Área restrita para consulta, indicadores e governança do Banco de Currículos SINPAPEL.
+            </p>
+          </div>
+
+          <form onSubmit={acessarPainel} className="mt-6 grid gap-4">
+            <label className="grid gap-1 text-sm font-semibold text-slate-700">
+              Chave de acesso
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="current-password"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                placeholder="Digite a chave administrativa"
+                className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={carregando || !token}
+              className="rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+            >
+              {carregando ? 'Validando...' : 'Entrar no painel'}
+            </button>
+          </form>
+
+          {erro && (
+            <p role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+              {erro}
+            </p>
+          )}
+        </section>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 px-3 py-5 text-slate-950 sm:px-4 sm:py-6">
       <div className="mx-auto max-w-7xl">
@@ -317,6 +404,13 @@ export default function AdminPage() {
               >
                 Fazer novo cadastro
               </Link>
+              <button
+                type="button"
+                onClick={sairPainel}
+                className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-sinred hover:text-sinred"
+              >
+                Sair
+              </button>
             </div>
             <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Painel administrativo</h1>
             <p className="mt-2 text-sm text-slate-600">Área para consultar os currículos recebidos pelo formulário público.</p>
@@ -335,24 +429,11 @@ export default function AdminPage() {
 
         <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
           <div>
-            <h2 className="text-lg font-semibold">Consulta administrativa</h2>
-            <p className="text-sm text-slate-600">Acesso restrito ao SINPAPEL.</p>
+            <h2 className="text-lg font-semibold">Buscar currículos</h2>
+            <p className="text-sm text-slate-600">Pesquise por nome, cidade, cargo, área, habilidade, e-mail ou telefone.</p>
           </div>
 
-          <form onSubmit={carregarCandidatos} className="mt-4 grid gap-3 lg:grid-cols-[260px_1fr_auto]">
-            <label className="grid gap-1 text-sm font-semibold text-slate-700">
-              Chave de acesso
-              <input
-                type="password"
-                required
-                minLength={8}
-                autoComplete="current-password"
-                value={token}
-                onChange={(event) => setToken(event.target.value)}
-                placeholder="Chave administrativa"
-                className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
-              />
-            </label>
+          <form onSubmit={carregarCandidatos} className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]">
             <label className="grid gap-1 text-sm font-semibold text-slate-700">
               Buscar candidato
               <input
