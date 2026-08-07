@@ -318,7 +318,7 @@ export default function AdminPage() {
                 Fazer novo cadastro
               </Link>
             </div>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Curriculos cadastrados</h1>
+            <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">Painel administrativo</h1>
             <p className="mt-2 text-sm text-slate-600">Área para consultar os currículos recebidos pelo formulário público.</p>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:min-w-72">
@@ -333,40 +333,44 @@ export default function AdminPage() {
           </div>
         </header>
 
-        <form onSubmit={carregarCandidatos} className="mt-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[minmax(180px,260px)_1fr_auto] sm:p-4">
-          <label className="grid gap-1 text-sm font-semibold text-slate-700">
-            Chave de acesso administrativo
-            <input
-              type="password"
-              required
-              minLength={8}
-              autoComplete="current-password"
-              value={token}
-              onChange={(event) => setToken(event.target.value)}
-              placeholder="Digite a chave administrativa"
-              className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
-            />
-          </label>
-          <label className="grid gap-1 text-sm font-semibold text-slate-700">
-            Buscar candidato
-            <input
-              value={busca}
-              onChange={(event) => setBusca(event.target.value)}
-              placeholder="Nome, cidade, cargo, área, habilidade, e-mail ou telefone"
-              className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
-            />
-          </label>
-          <button
-            type="submit"
-            disabled={carregando || !token}
-            className="min-w-0 self-end rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {carregando ? 'Carregando...' : 'Consultar'}
-          </button>
-          <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700 sm:col-span-3">
-            Acesso restrito ao SINPAPEL.
-          </p>
-        </form>
+        <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
+          <div>
+            <h2 className="text-lg font-semibold">Consulta administrativa</h2>
+            <p className="text-sm text-slate-600">Acesso restrito ao SINPAPEL.</p>
+          </div>
+
+          <form onSubmit={carregarCandidatos} className="mt-4 grid gap-3 lg:grid-cols-[260px_1fr_auto]">
+            <label className="grid gap-1 text-sm font-semibold text-slate-700">
+              Chave de acesso
+              <input
+                type="password"
+                required
+                minLength={8}
+                autoComplete="current-password"
+                value={token}
+                onChange={(event) => setToken(event.target.value)}
+                placeholder="Chave administrativa"
+                className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
+              />
+            </label>
+            <label className="grid gap-1 text-sm font-semibold text-slate-700">
+              Buscar candidato
+              <input
+                value={busca}
+                onChange={(event) => setBusca(event.target.value)}
+                placeholder="Nome, cidade, cargo, área, habilidade, e-mail ou telefone"
+                className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-normal outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
+              />
+            </label>
+            <button
+              type="submit"
+              disabled={carregando || !token}
+              className="min-w-0 self-end rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {carregando ? 'Carregando...' : 'Consultar'}
+            </button>
+          </form>
+        </section>
 
         {erro && (
           <p role="alert" className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
