@@ -89,7 +89,6 @@ export default function AdminPage() {
   const [logs, setLogs] = useState<LogAcesso[]>([]);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [atsKey, setAtsKey] = useState<string | null>(null);
-  const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
   const [indicadores, setIndicadores] = useState<Indicadores | null>(null);
 
   const totalAtivos = useMemo(() => candidatos.filter((candidato) => candidato.ativo).length, [candidatos]);
@@ -336,7 +335,7 @@ export default function AdminPage() {
 
         <form onSubmit={carregarCandidatos} className="mt-5 grid gap-3 rounded-lg border border-slate-200 bg-white p-3 sm:grid-cols-[minmax(180px,260px)_1fr_auto] sm:p-4">
           <label className="grid gap-1 text-sm font-semibold text-slate-700">
-            Senha do admin
+            Chave de acesso administrativo
             <input
               type="password"
               required
@@ -364,10 +363,9 @@ export default function AdminPage() {
           >
             {carregando ? 'Carregando...' : 'Consultar'}
           </button>
-          <button type="button" onClick={() => setMostrarRecuperacao((atual) => !atual)} className="text-sm font-semibold text-brand-700 underline underline-offset-4 sm:col-span-3 sm:justify-self-start">
-            Esqueci a chave administrativa
-          </button>
-          {mostrarRecuperacao && <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700 sm:col-span-3">A chave administrativa nao e recuperada pela tela. Solicite ao responsavel pelo SINPAPEL a configuracao de uma nova chave segura.</div>}
+          <p className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700 sm:col-span-3">
+            Acesso restrito ao SINPAPEL.
+          </p>
         </form>
 
         {erro && (
