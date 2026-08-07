@@ -1,6 +1,6 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 
 type SendEmailInput = {
   to: string;
