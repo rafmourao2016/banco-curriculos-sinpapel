@@ -5,24 +5,24 @@ export default function HomePage() {
     <main className="min-h-screen bg-paper text-slate-950">
       <section className="mx-auto grid min-h-screen max-w-7xl content-center gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_460px] xl:grid-cols-[minmax(0,1fr)_520px]">
         <div className="flex flex-col justify-center">
-          <div className="flex items-center">
+          <div className="logo-spotlight flex items-center">
             <img
               src="/logo-sinpapel.png"
               alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
-              className="h-auto w-64 max-w-full sm:w-80"
+              className="relative z-10 h-auto w-64 max-w-full sm:w-80"
             />
           </div>
           <p className="mt-6 text-xs font-bold uppercase tracking-[0.22em] text-sinred sm:text-sm">
             Banco de Currículos
           </p>
           <h1 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-            Cadastre seu curriculo no Banco de Curriculos SINPAPEL.
+            Banco de Curriculos SINPAPEL para aproximar talentos e empresas associadas.
           </h1>
           <p className="mt-6 max-w-3xl text-base leading-7 text-slate-700 sm:text-xl sm:leading-9 lg:text-2xl">
-            Aponte a camera do celular para o QR Code e preencha seus dados para ser encontrado por empresas associadas do setor de papel, celulose e embalagem.
+            Uma iniciativa alinhada a missao de congregar, promover e defender os interesses das empresas do setor em Minas Gerais.
           </p>
-          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-700 sm:text-lg">
-            O sistema organiza os curriculos e ajuda empresas associadas a encontrar candidatos por area, cidade, turno, experiencia e disponibilidade.
+          <p className="mt-4 max-w-3xl rounded-2xl border border-brand-600/20 bg-white/70 px-4 py-3 text-base font-medium leading-7 text-brand-700 shadow-sm sm:text-lg">
+            No evento, escaneie o QR Code e cadastre seu curriculo para participar do banco de oportunidades do SINPAPEL.
           </p>
 
           <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
