@@ -26,42 +26,54 @@ button {
 }
 
 ::placeholder {
-  color: #475569;
+  color: #7a625c;
   opacity: 1;
 }
 
 button:disabled {
-  background-color: #475569;
-  border-color: #475569;
+  background-color: #8b7a74;
+  border-color: #8b7a74;
   color: #ffffff;
   opacity: 1;
 }
 
 .bg-brand-600 {
-  background-color: #0b56cc;
+  background-color: #6b3b31;
 }
 
 .hover\:bg-brand-700:hover,
 .bg-brand-700 {
-  background-color: #083d99;
+  background-color: #4a2924;
 }
 
 .border-brand-600 {
-  border-color: #0b56cc;
+  border-color: #6b3b31;
 }
 
 .text-brand-700 {
-  color: #083d99;
+  color: #4a2924;
 }
 
 .text-singreen {
-  color: #24502c;
+  color: #6b3b31;
 }
 
 .text-slate-500,
 .text-slate-600,
 .text-slate-700 {
-  color: #334155;
+  color: #4b3833;
+}
+
+.bg-emerald-50 {
+  background-color: #fbf4ed;
+}
+
+.text-emerald-700 {
+  color: #6b3b31;
+}
+
+.border-emerald-100 {
+  border-color: #f1dfd6;
 }
 
 a,
@@ -90,7 +102,7 @@ h3 {
   height: 100%;
   width: 38%;
   border-radius: 999px;
-  background: linear-gradient(90deg, #d10606, #116dff, #36633c);
+  background: linear-gradient(90deg, #ef2f3a, #6b3b31, #d9a441);
   transform: translateX(-110%);
 }
 

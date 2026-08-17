@@ -108,8 +108,8 @@ export default function CadastroPage() {
           </div>
         </div>
 
-        <header className="mt-8 rounded-3xl bg-slate-950 p-5 text-white shadow-2xl shadow-slate-300/60 sm:p-8">
-          <p className="text-sm font-semibold uppercase tracking-wide text-brand-200">Cadastro gratuito</p>
+        <header className="mt-8 rounded-3xl bg-brand-700 p-5 text-white shadow-2xl shadow-slate-300/60 sm:p-8">
+          <p className="text-sm font-semibold uppercase tracking-wide text-brand-100">Cadastro gratuito</p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-4xl">
             Cadastre seu currículo para ser encontrado por empresas associadas.
           </h1>

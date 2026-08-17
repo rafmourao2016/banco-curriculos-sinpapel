@@ -6,14 +6,14 @@ const config: Config = {
     extend: {
       colors: {
         brand: {
-          50: '#f0f6ff',
-          100: '#dbeafe',
-          600: '#116dff',
-          700: '#0b56cc',
+          50: '#fbf4ed',
+          100: '#f1dfd6',
+          600: '#6b3b31',
+          700: '#4a2924',
         },
-        paper: '#fcf7f0',
-        sinred: '#d10606',
-        singreen: '#36633c',
+        paper: '#fbf4ed',
+        sinred: '#ef2f3a',
+        singreen: '#6b3b31',
       },
     },
   },
