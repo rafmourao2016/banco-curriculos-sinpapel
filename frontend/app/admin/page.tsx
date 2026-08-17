@@ -346,7 +346,12 @@ export default function AdminPage() {
           </Link>
 
           <div className="mt-8">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-sinred">SINPAPEL Minas Gerais</p>
+            <img
+              src="/logo-sinpapel.png"
+              alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+              className="h-auto w-64 max-w-full"
+            />
+            <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-sinred">Área restrita</p>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight">Acesso administrativo</h1>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Área restrita para consulta, indicadores e governança do Banco de Currículos SINPAPEL.
@@ -392,6 +397,11 @@ export default function AdminPage() {
         <header className="flex flex-col gap-4 border-b border-slate-200 pb-5 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-3">
+              <img
+                src="/logo-sinpapel.png"
+                alt="SINPAPEL"
+                className="mr-2 h-auto w-40 max-w-full"
+              />
               <Link
                 href="/"
                 className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-brand-600 hover:text-brand-700"

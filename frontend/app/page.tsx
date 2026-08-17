@@ -5,8 +5,15 @@ export default function HomePage() {
     <main className="min-h-screen bg-paper text-slate-950">
       <section className="mx-auto grid min-h-screen max-w-7xl content-center gap-8 px-4 py-8 sm:px-6 sm:py-10 lg:grid-cols-[minmax(0,1fr)_460px] xl:grid-cols-[minmax(0,1fr)_520px]">
         <div className="flex flex-col justify-center">
-          <p className="text-xs font-bold uppercase tracking-[0.22em] text-sinred sm:text-sm">
-            SINPAPEL Minas Gerais
+          <div className="flex items-center">
+            <img
+              src="/logo-sinpapel.png"
+              alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+              className="h-auto w-64 max-w-full sm:w-80"
+            />
+          </div>
+          <p className="mt-6 text-xs font-bold uppercase tracking-[0.22em] text-sinred sm:text-sm">
+            Banco de Currículos
           </p>
           <h1 className="mt-5 max-w-4xl text-3xl font-semibold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
             Cadastre seu curriculo no Banco de Curriculos SINPAPEL.

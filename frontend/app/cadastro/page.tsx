@@ -75,6 +75,13 @@ export default function CadastroPage() {
   return (
     <main className="min-h-screen bg-gradient-to-b from-brand-50 via-white to-slate-50 px-5 py-8">
       <div className="mx-auto max-w-3xl">
+        <div className="mb-6 flex justify-center">
+          <img
+            src="/logo-sinpapel.png"
+            alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+            className="h-auto w-64 max-w-full sm:w-80"
+          />
+        </div>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <Link
             href="/"
