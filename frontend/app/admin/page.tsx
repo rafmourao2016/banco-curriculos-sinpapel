@@ -349,7 +349,7 @@ export default function AdminPage() {
             <img
               src="/logo-sinpapel.png"
               alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
-              className="h-auto w-64 max-w-full"
+              className="h-auto w-64 max-w-full drop-shadow-[0_18px_28px_rgba(107,59,49,0.18)]"
             />
             <p className="mt-6 text-xs font-bold uppercase tracking-[0.2em] text-sinred">Área restrita</p>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight">Acesso administrativo</h1>
@@ -400,7 +400,7 @@ export default function AdminPage() {
               <img
                 src="/logo-sinpapel.png"
                 alt="SINPAPEL"
-                className="mr-2 h-auto w-40 max-w-full"
+                className="mr-2 h-auto w-40 max-w-full drop-shadow-[0_12px_18px_rgba(107,59,49,0.16)]"
               />
               <Link
                 href="/"

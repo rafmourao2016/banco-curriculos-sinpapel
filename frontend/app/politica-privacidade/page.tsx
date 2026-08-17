@@ -5,6 +5,13 @@ export default function PoliticaPrivacidadePage() {
     <main className="min-h-screen bg-paper px-4 py-8 text-slate-950 sm:px-6">
       <article className="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-10">
         <Link href="/" className="inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-800">Voltar ao inicio</Link>
+        <div className="logo-spotlight mt-8">
+          <img
+            src="/logo-sinpapel.png"
+            alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+            className="relative z-10 h-auto w-56 max-w-full sm:w-72"
+          />
+        </div>
         <p className="mt-8 text-sm font-bold uppercase tracking-[0.18em] text-singreen">SINPAPEL</p>
         <h1 className="mt-3 text-3xl font-semibold">Politica de privacidade</h1>
         <p className="mt-4 leading-7 text-slate-600">Versao operacional para revisao juridica antes da publicacao definitiva.</p>

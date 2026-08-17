@@ -92,6 +92,13 @@ export default function RecuperarSenhaPage() {
     <main className="min-h-screen bg-paper px-4 py-8 text-slate-950 sm:px-6">
       <section className="mx-auto max-w-lg rounded-2xl bg-white p-6 shadow-xl shadow-slate-200/70 sm:p-8">
         <Link href="/" className="text-sm font-semibold text-brand-700 underline underline-offset-4">Voltar ao início</Link>
+        <div className="logo-spotlight mt-8">
+          <img
+            src="/logo-sinpapel.png"
+            alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+            className="relative z-10 h-auto w-56 max-w-full sm:w-72"
+          />
+        </div>
         <h1 className="mt-8 text-2xl font-semibold">Criar nova senha</h1>
         <p className="mt-2 text-sm leading-6 text-slate-600">Use uma senha com pelo menos 8 caracteres. O link de recuperação vale por 1 hora e pode ser usado uma única vez.</p>
         <Suspense fallback={<p className="mt-6 text-sm text-slate-600">Carregando...</p>}><FormularioRecuperacao /></Suspense>

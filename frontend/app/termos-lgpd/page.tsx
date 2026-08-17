@@ -7,6 +7,13 @@ export default function TermosLgpdPage() {
         <Link href="/cadastro" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50">
           Voltar ao cadastro
         </Link>
+        <div className="logo-spotlight mt-8">
+          <img
+            src="/logo-sinpapel.png"
+            alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+            className="relative z-10 h-auto w-56 max-w-full sm:w-72"
+          />
+        </div>
         <h1 className="mt-6 text-3xl font-semibold text-slate-950">Termo de consentimento LGPD</h1>
         <p className="mt-4 leading-7 text-slate-600">Ao prosseguir com o cadastro, voce autoriza o SINPAPEL a tratar os dados informados para composicao do banco de curriculos e eventual contato por empresas associadas.</p>
         <div className="mt-8 space-y-5 text-slate-700">

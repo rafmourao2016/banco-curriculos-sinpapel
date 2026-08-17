@@ -362,6 +362,14 @@ export default function EmpresaPage() {
           </Link>
         </div>
 
+        <div className="logo-spotlight mt-8">
+          <img
+            src="/logo-sinpapel.png"
+            alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+            className="relative z-10 h-auto w-64 max-w-full sm:w-80"
+          />
+        </div>
+
         <header className="mt-8 rounded-2xl bg-white p-5 shadow-xl shadow-slate-200/70 sm:p-6">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-singreen">Painel da empresa</p>
           <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">Encontre candidatos ativos no banco do SINPAPEL.</h1>
