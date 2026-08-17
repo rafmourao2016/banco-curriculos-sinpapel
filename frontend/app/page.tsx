@@ -22,7 +22,7 @@ export default function HomePage() {
             Uma iniciativa alinhada a missao de congregar, promover e defender os interesses das empresas do setor em Minas Gerais.
           </p>
           <p className="mt-4 max-w-3xl rounded-2xl border border-brand-600/20 bg-white/70 px-4 py-3 text-base font-medium leading-7 text-brand-700 shadow-sm sm:text-lg">
-            No evento, escaneie o QR Code e cadastre seu curriculo para participar do banco de oportunidades do SINPAPEL.
+            Escaneie o QR Code e cadastre seu curriculo para participar do banco de oportunidades do SINPAPEL.
           </p>
 
           <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
