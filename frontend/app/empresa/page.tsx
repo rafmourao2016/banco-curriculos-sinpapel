@@ -98,7 +98,7 @@ export default function EmpresaPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message ?? 'Nao foi possivel solicitar a recuperacao.');
-      setMensagem(data.mensagem ?? 'Confira seu e-mail para redefinir a senha.');
+      setMensagem(`${data.mensagem ?? 'Confira seu e-mail para redefinir a senha.'} Verifique também a pasta de spam, lixo eletrônico ou promoções.`);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
