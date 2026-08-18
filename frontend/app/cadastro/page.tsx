@@ -15,6 +15,7 @@ import {
   turnoOptions,
 } from '../../lib/cadastroSchema';
 import { cadastrarCandidato } from '../../lib/api';
+import { apenasDigitos } from '../../lib/documentos';
 import { Campo } from '../../components/Campo';
 
 const inputClasses =
@@ -32,11 +33,13 @@ const experienciaVazia = {
 export default function CadastroPage() {
   const [enviado, setEnviado] = useState(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
+  const [statusCep, setStatusCep] = useState<string | null>(null);
 
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<CadastroFormValues>({
     resolver: zodResolver(cadastroSchema),
@@ -44,6 +47,7 @@ export default function CadastroPage() {
       possuiCnh: false,
       experienciaSetorPapel: false,
       turnos: [],
+      cep: '',
       inicioImediato: false,
       disponibilidadeMudanca: false,
       pcd: false,
@@ -63,6 +67,36 @@ export default function CadastroPage() {
       setEnviado(true);
     } catch (e) {
       setErroEnvio(e instanceof Error ? e.message : 'Erro inesperado. Tente novamente.');
+    }
+  }
+
+  async function buscarCep(valor: string) {
+    const cep = apenasDigitos(valor);
+    setStatusCep(null);
+    if (!cep) return;
+    if (cep.length !== 8) {
+      setStatusCep('Informe um CEP com 8 dígitos.');
+      return;
+    }
+
+    setStatusCep('Buscando CEP...');
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+      const dados = await res.json();
+      if (!res.ok || dados.erro) {
+        setStatusCep('CEP não encontrado. Preencha cidade e UF manualmente.');
+        return;
+      }
+
+      if (dados.localidade) {
+        setValue('regiao', dados.localidade, { shouldValidate: true, shouldDirty: true });
+      }
+      if (dados.uf) {
+        setValue('uf', dados.uf, { shouldValidate: true, shouldDirty: true });
+      }
+      setStatusCep('Cidade e UF preenchidas pelo CEP.');
+    } catch {
+      setStatusCep('Não foi possível buscar o CEP agora. Preencha cidade e UF manualmente.');
     }
   }
 
@@ -156,12 +190,27 @@ export default function CadastroPage() {
               <input id="dataNascimento" type="date" className={inputClasses} {...register('dataNascimento')} />
             </Campo>
 
+            <Campo id="cep" label="CEP" erro={errors.cep?.message}>
+              <>
+                <input
+                  id="cep"
+                  inputMode="numeric"
+                  autoComplete="postal-code"
+                  className={inputClasses}
+                  placeholder="00000-000"
+                  {...register('cep')}
+                  onBlur={(event) => buscarCep(event.target.value)}
+                />
+                {statusCep && <p className="mt-1 text-sm text-slate-600">{statusCep}</p>}
+              </>
+            </Campo>
+
             <Campo id="regiao" label="Cidade / regiao" erro={errors.regiao?.message}>
-              <input id="regiao" className={inputClasses} {...register('regiao')} />
+              <input id="regiao" autoComplete="address-level2" className={inputClasses} {...register('regiao')} />
             </Campo>
 
             <Campo id="uf" label="UF" erro={errors.uf?.message}>
-              <input id="uf" className={inputClasses} maxLength={2} placeholder="MG" {...register('uf')} />
+              <input id="uf" autoComplete="address-level1" className={inputClasses} maxLength={2} placeholder="MG" {...register('uf')} />
             </Campo>
           </section>
 

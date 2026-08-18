@@ -74,6 +74,7 @@ export const cadastroSchema = z.object({
   email: z.string().email('E-mail invalido'),
   telefone: z.string().min(10, 'Telefone invalido'),
   dataNascimento: z.string().min(1, 'Informe sua data de nascimento'),
+  cep: z.string().optional().refine((valor) => !valor || valor.replace(/\D/g, '').length === 8, 'CEP inválido'),
   regiao: z.string().min(2, 'Informe sua cidade/regiao'),
   uf: z.string().min(2, 'Informe a UF').max(2, 'Use a sigla da UF'),
   escolaridade: z.enum([
