@@ -6,6 +6,11 @@ type CurriculoPdf = {
   telefone: string;
   regiao: string;
   uf?: string | null;
+  cep?: string | null;
+  logradouro?: string | null;
+  bairro?: string | null;
+  numeroEndereco?: string | null;
+  complementoEndereco?: string | null;
   escolaridade: string;
   possuiCnh: boolean;
   categoriaCnh?: string | null;
@@ -68,6 +73,15 @@ export async function gerarCurriculoPdf(candidato: CurriculoPdf) {
   doc.moveDown(3.2);
   doc.text(`${candidato.email}  |  ${candidato.telefone}`);
   doc.text(`${candidato.regiao}${candidato.uf ? `/${candidato.uf}` : ''}`);
+  const endereco = [
+    candidato.logradouro,
+    candidato.numeroEndereco,
+    candidato.bairro,
+    candidato.cep ? `CEP ${candidato.cep}` : null,
+  ].filter(Boolean).join(', ');
+  if (endereco) {
+    doc.text(`Endereco: ${endereco}${candidato.complementoEndereco ? ` - ${candidato.complementoEndereco}` : ''}`);
+  }
 
   doc.moveDown(1.2);
   doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Objetivo profissional');

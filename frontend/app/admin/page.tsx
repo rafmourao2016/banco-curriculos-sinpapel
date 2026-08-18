@@ -20,6 +20,11 @@ type Candidato = {
   telefone: string;
   regiao: string;
   uf?: string | null;
+  cep?: string | null;
+  logradouro?: string | null;
+  bairro?: string | null;
+  numeroEndereco?: string | null;
+  complementoEndereco?: string | null;
   escolaridade: string;
   possuiCnh: boolean;
   categoriaCnh?: string | null;
@@ -712,6 +717,22 @@ export default function AdminPage() {
                       <dt className="font-semibold text-slate-500">Telefone</dt>
                       <dd>{candidato.telefone}</dd>
                     </div>
+                    {(candidato.logradouro || candidato.bairro || candidato.numeroEndereco || candidato.cep) && (
+                      <div className="sm:col-span-2">
+                        <dt className="font-semibold text-slate-500">Endereço</dt>
+                        <dd>
+                          {[
+                            candidato.logradouro,
+                            candidato.numeroEndereco,
+                            candidato.bairro,
+                            candidato.regiao,
+                            candidato.uf,
+                            candidato.cep ? `CEP ${candidato.cep}` : null,
+                          ].filter(Boolean).join(', ')}
+                          {candidato.complementoEndereco ? ` - ${candidato.complementoEndereco}` : ''}
+                        </dd>
+                      </div>
+                    )}
                     <div>
                       <dt className="font-semibold text-slate-500">CPF</dt>
                       <dd>{candidato.cpf}</dd>

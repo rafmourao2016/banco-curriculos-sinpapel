@@ -79,6 +79,10 @@ export const cadastroSchema = z.object({
   telefone: z.string().min(10, 'Telefone invalido'),
   dataNascimento: z.string().min(1, 'Informe sua data de nascimento'),
   cep: z.string().optional().refine((valor) => !valor || valor.replace(/\D/g, '').length === 8, 'CEP inválido'),
+  logradouro: z.string().max(150, 'Use no máximo 150 caracteres').optional(),
+  bairro: z.string().max(100, 'Use no máximo 100 caracteres').optional(),
+  numeroEndereco: z.string().max(20, 'Use no máximo 20 caracteres').optional(),
+  complementoEndereco: z.string().max(100, 'Use no máximo 100 caracteres').optional(),
   regiao: z.string().min(2, 'Informe sua cidade/regiao'),
   uf: z.string().min(2, 'Informe a UF').max(2, 'Use a sigla da UF'),
   escolaridade: z.enum([

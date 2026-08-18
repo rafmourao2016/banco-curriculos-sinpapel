@@ -49,6 +49,31 @@ export class CriarCandidatoDto {
   @IsDateString()
   dataNascimento: string;
 
+  @IsOptional()
+  @IsString()
+  @MaxLength(8)
+  cep?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(150)
+  logradouro?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  bairro?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  numeroEndereco?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  complementoEndereco?: string;
+
   @IsString()
   @MaxLength(100)
   regiao: string;

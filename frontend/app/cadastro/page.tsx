@@ -52,6 +52,10 @@ export default function CadastroPage() {
       experienciaSetorPapel: false,
       turnos: [],
       cep: '',
+      logradouro: '',
+      bairro: '',
+      numeroEndereco: '',
+      complementoEndereco: '',
       inicioImediato: false,
       disponibilidadeMudanca: false,
       pcd: false,
@@ -103,7 +107,13 @@ export default function CadastroPage() {
       if (dados.uf) {
         setValue('uf', dados.uf, { shouldValidate: true, shouldDirty: true });
       }
-      setStatusCep('Cidade e UF preenchidas pelo CEP.');
+      if (dados.logradouro) {
+        setValue('logradouro', dados.logradouro, { shouldValidate: true, shouldDirty: true });
+      }
+      if (dados.bairro) {
+        setValue('bairro', dados.bairro, { shouldValidate: true, shouldDirty: true });
+      }
+      setStatusCep('Endereço preenchido pelo CEP. Complete o número.');
     } catch {
       setStatusCep('Não foi possível buscar o CEP agora. Preencha cidade e UF manualmente.');
     }
@@ -212,6 +222,22 @@ export default function CadastroPage() {
                 />
                 {statusCep && <p className="mt-1 text-sm text-slate-600">{statusCep}</p>}
               </>
+            </Campo>
+
+            <Campo id="logradouro" label="Rua / logradouro" erro={errors.logradouro?.message}>
+              <input id="logradouro" autoComplete="address-line1" className={inputClasses} placeholder="Rua, avenida, travessa..." {...register('logradouro')} />
+            </Campo>
+
+            <Campo id="numeroEndereco" label="Número" erro={errors.numeroEndereco?.message}>
+              <input id="numeroEndereco" inputMode="numeric" autoComplete="address-line2" className={inputClasses} placeholder="Ex.: 123" {...register('numeroEndereco')} />
+            </Campo>
+
+            <Campo id="bairro" label="Bairro" erro={errors.bairro?.message}>
+              <input id="bairro" className={inputClasses} placeholder="Bairro" {...register('bairro')} />
+            </Campo>
+
+            <Campo id="complementoEndereco" label="Complemento (opcional)" erro={errors.complementoEndereco?.message}>
+              <input id="complementoEndereco" autoComplete="address-line3" className={inputClasses} placeholder="Apto, bloco, referência..." {...register('complementoEndereco')} />
             </Campo>
 
             <Campo id="regiao" label="Cidade / regiao" erro={errors.regiao?.message}>

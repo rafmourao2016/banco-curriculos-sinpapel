@@ -19,6 +19,11 @@ model Candidato {
   email                  String    @unique
   telefone               String
   dataNascimento         DateTime  @map("data_nascimento")
+  cep                    String?
+  logradouro             String?
+  bairro                 String?
+  numeroEndereco         String?   @map("numero_endereco")
+  complementoEndereco    String?   @map("complemento_endereco")
   regiao                 String
   uf                     String?
   escolaridade           Escolaridade

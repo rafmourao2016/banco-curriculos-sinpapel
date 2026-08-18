@@ -15,6 +15,11 @@ type CandidatoEmpresa = {
   telefone: string;
   regiao: string;
   uf?: string | null;
+  cep?: string | null;
+  logradouro?: string | null;
+  bairro?: string | null;
+  numeroEndereco?: string | null;
+  complementoEndereco?: string | null;
   possuiCnh: boolean;
   categoriaCnh?: string | null;
   cargoPretendido?: string | null;
@@ -567,6 +572,20 @@ export default function EmpresaPage() {
                     <div className="grid gap-2 text-sm text-slate-700 lg:min-w-72">
                       <p><strong>E-mail:</strong> {candidato.email}</p>
                       <p><strong>Telefone:</strong> {candidato.telefone}</p>
+                      {(candidato.logradouro || candidato.bairro || candidato.numeroEndereco || candidato.cep) && (
+                        <p>
+                          <strong>Endereço:</strong>{' '}
+                          {[
+                            candidato.logradouro,
+                            candidato.numeroEndereco,
+                            candidato.bairro,
+                            candidato.regiao,
+                            candidato.uf,
+                            candidato.cep ? `CEP ${candidato.cep}` : null,
+                          ].filter(Boolean).join(', ')}
+                          {candidato.complementoEndereco ? ` - ${candidato.complementoEndereco}` : ''}
+                        </p>
+                      )}
                       <p><strong>CNH:</strong> {candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Nao'}</p>
                       <p><strong>Status:</strong> {candidato.statusEmpresa?.replaceAll('_', ' ') ?? 'Sem status'}</p>
                       {candidato.comentarioEmpresa && <p><strong>Comentario:</strong> {candidato.comentarioEmpresa}</p>}
