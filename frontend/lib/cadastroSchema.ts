@@ -68,6 +68,10 @@ const experienciaSchema = z.object({
   },
 );
 
+const cursoCertificacaoSchema = z.object({
+  nome: z.string().max(120, 'Use no maximo 120 caracteres').optional(),
+});
+
 export const cadastroSchema = z.object({
   nome: z.string().min(3, 'Informe seu nome completo'),
   cpf: z.string().min(11, 'CPF inválido').max(14).refine(cpfValido, 'CPF inválido. Confira o número informado.'),
@@ -100,7 +104,7 @@ export const cadastroSchema = z.object({
   instituicaoFormacao: z.string().min(2, 'Informe a instituicao'),
   statusFormacao: z.enum(['cursando', 'concluido', 'trancado']),
   anoFormacao: z.coerce.number().int().min(1950, 'Ano invalido').max(2100, 'Ano invalido'),
-  cursosCertificacoes: z.string().optional(),
+  cursosCertificacoes: z.array(cursoCertificacaoSchema).max(20, 'Informe no maximo 20 cursos').optional(),
   idiomas: z.string().optional(),
   pcd: z.boolean(),
   pcdObservacao: z.string().max(200, 'Use no maximo 200 caracteres').optional(),
