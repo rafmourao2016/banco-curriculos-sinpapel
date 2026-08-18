@@ -227,7 +227,7 @@ export class JobsController {
     try {
       await this.emailService.send({
         to: empresa.email,
-        subject: 'Atualizacao de acesso - Banco de Curriculos SINPAPEL',
+        subject: 'Atualização de acesso - Banco de Currículos SINPAPEL',
         html: this.emailAvisoEmpresaHtml(empresa.razaoSocial, acessoUrl, redefinirUrl),
       });
 
@@ -262,19 +262,19 @@ export class JobsController {
     return `
       <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.55;">
         <p>Associados,</p>
-        <p>O Banco de Curriculos SINPAPEL esta com novos curriculos cadastrados e disponiveis para consulta pela empresa ${this.escapeHtml(razaoSocial)}.</p>
-        <p>Acesse a plataforma e confira os candidatos que atendem as vagas em aberto:</p>
+        <p>O Banco de Currículos SINPAPEL está com novos currículos cadastrados e disponíveis para consulta pela empresa ${this.escapeHtml(razaoSocial)}.</p>
+        <p>Acesse a plataforma e confira os candidatos que atendem às vagas em aberto:</p>
         <p style="margin: 24px 0;">
           <a href="${acessoUrl}" style="background: #7a3f33; color: #ffffff; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 700;">Acessar plataforma</a>
         </p>
-        <p>Por seguranca, pedimos que atualize a senha de acesso vinculada ao e-mail cadastrado na sua empresa. Essa atualizacao simples ajuda a manter os dados protegidos e o acesso exclusivo aos responsaveis autorizados.</p>
+        <p>Por segurança, pedimos que atualize a senha de acesso vinculada ao e-mail cadastrado na sua empresa. Essa atualização simples ajuda a manter os dados protegidos e o acesso exclusivo aos responsáveis autorizados.</p>
         <p style="margin: 24px 0;">
           <a href="${redefinirUrl}" style="background: #ffffff; color: #7a3f33; padding: 11px 17px; text-decoration: none; border: 1px solid #7a3f33; border-radius: 6px; font-weight: 700;">Alterar senha de acesso</a>
         </p>
-        <p>Importante: caso sua empresa precise trocar o e-mail de acesso a plataforma, nao e possivel altera-lo diretamente pelo sistema. Basta responder este e-mail informando o novo endereco, e o SINPAPEL fara a liberacao do acesso.</p>
-        <p>Qualquer duvida, estamos a disposicao.</p>
+        <p>Importante: caso sua empresa precise trocar o e-mail de acesso à plataforma, não é possível alterá-lo diretamente pelo sistema. Basta responder este e-mail informando o novo endereço, e o SINPAPEL fará a liberação do acesso.</p>
+        <p>Qualquer dúvida, estamos à disposição.</p>
         <p>Atenciosamente,<br/>SINPAPEL</p>
-        <p style="font-size: 12px; color: #64748b;">O link de alteracao de senha expira em 1 hora e pode ser usado uma unica vez.</p>
+        <p style="font-size: 12px; color: #64748b;">O link de alteração de senha expira em 1 hora e pode ser usado uma única vez.</p>
       </div>
     `;
   }

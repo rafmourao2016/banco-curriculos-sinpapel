@@ -295,21 +295,21 @@ export class AdminController {
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
 ${sheet('Resumo', [
   row(['Indicador', 'Valor']),
-  row(['Curriculos totais', indicadores.resumo.totalCandidatos]),
-  row(['Curriculos ativos', indicadores.resumo.ativos]),
-  row(['Curriculos inativos', indicadores.resumo.inativos]),
+  row(['Currículos totais', indicadores.resumo.totalCandidatos]),
+  row(['Currículos ativos', indicadores.resumo.ativos]),
+  row(['Currículos inativos', indicadores.resumo.inativos]),
   row(['Empresas totais', indicadores.resumo.totalEmpresas]),
   row(['Empresas aprovadas', indicadores.resumo.empresasAprovadas]),
-  row(['Revalidacoes enviadas/registradas', indicadores.resumo.revalidacoesTotal]),
-  row(['Revalidacoes confirmadas', indicadores.resumo.revalidacoesConfirmadas]),
-  row(['Taxa de revalidacao (%)', indicadores.resumo.taxaRevalidacao]),
+  row(['Revalidações enviadas/registradas', indicadores.resumo.revalidacoesTotal]),
+  row(['Revalidações confirmadas', indicadores.resumo.revalidacoesConfirmadas]),
+  row(['Taxa de revalidação (%)', indicadores.resumo.taxaRevalidacao]),
 ])}
 ${sheet('Ranking empresas', [
   row(['Empresa', 'E-mail', 'Visualizacoes']),
   ...indicadores.rankingUsoEmpresas.map((item) => row([item.razaoSocial, item.email, item.visualizacoes])),
 ])}
-${sheet('Contratacoes', [
-  row(['Periodo', 'Contratacoes']),
+${sheet('Contratações', [
+  row(['Período', 'Contratações']),
   ...indicadores.contratacoesPorPeriodo.map((item) => row([item.periodo, item.total])),
 ])}
 </Workbook>`;

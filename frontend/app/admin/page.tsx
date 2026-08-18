@@ -155,7 +155,7 @@ export default function AdminPage() {
 
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message ?? 'Nao foi possivel carregar os curriculos.');
+        throw new Error(body.message ?? 'Não foi possível carregar os currículos.');
       }
 
       setCandidatos(await res.json());
@@ -173,7 +173,7 @@ export default function AdminPage() {
     setCarregando(true);
     try {
       const res = await fetch(`${API_URL}/admin/empresas`, { headers: { 'x-admin-token': token } });
-      if (!res.ok) throw new Error('Nao foi possivel carregar empresas.');
+      if (!res.ok) throw new Error('Não foi possível carregar empresas.');
       setEmpresas(await res.json());
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -191,7 +191,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
         body: JSON.stringify({ statusAprovacao }),
       });
-      if (!res.ok) throw new Error('Nao foi possivel atualizar a empresa.');
+      if (!res.ok) throw new Error('Não foi possível atualizar a empresa.');
       await carregarEmpresas();
       setMensagem('Empresa atualizada.');
     } catch (e) {
@@ -209,7 +209,7 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
         body: JSON.stringify({ nome: 'ATS' }),
       });
-      if (!res.ok) throw new Error('Nao foi possivel gerar chave ATS.');
+      if (!res.ok) throw new Error('Não foi possível gerar chave ATS.');
       const body = await res.json();
       setAtsKey(body.apiKey);
       setMensagem('Chave ATS gerada. Copie agora, ela nao sera exibida novamente.');
@@ -227,9 +227,9 @@ export default function AdminPage() {
         method: 'POST',
         headers: { 'x-admin-token': token },
       });
-      if (!res.ok) throw new Error('Nao foi possivel atualizar embeddings.');
+      if (!res.ok) throw new Error('Não foi possível atualizar embeddings.');
       const body = await res.json();
-      setMensagem(`Busca semantica atualizada. Curriculos processados: ${body.candidatosAtualizados ?? 0}.`);
+      setMensagem(`Busca semântica atualizada. Currículos processados: ${body.candidatosAtualizados ?? 0}.`);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -246,7 +246,7 @@ export default function AdminPage() {
         method: 'DELETE',
         headers: { 'x-admin-token': token },
       });
-      if (!res.ok) throw new Error('Nao foi possivel excluir o candidato.');
+      if (!res.ok) throw new Error('Não foi possível excluir o candidato.');
       setCandidatos((atuais) => atuais.filter((candidato) => candidato.id !== id));
       setMensagem('Dados excluidos conforme solicitacao LGPD.');
     } catch (e) {
@@ -260,7 +260,7 @@ export default function AdminPage() {
     setCarregando(true);
     try {
       const res = await fetch(`${API_URL}/admin/logs`, { headers: { 'x-admin-token': token } });
-      if (!res.ok) throw new Error('Nao foi possivel carregar logs.');
+      if (!res.ok) throw new Error('Não foi possível carregar logs.');
       setLogs(await res.json());
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -278,8 +278,8 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
         body: JSON.stringify({ candidatoId, tipo: 'geral', canal: 'email' }),
       });
-      if (!res.ok) throw new Error('Nao foi possivel registrar comunicacao.');
-      setMensagem('Comunicacao manual registrada como pendente.');
+      if (!res.ok) throw new Error('Não foi possível registrar comunicação.');
+      setMensagem('Comunicação manual registrada como pendente.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     }
@@ -294,9 +294,9 @@ export default function AdminPage() {
         method: 'POST',
         headers: { 'x-admin-token': token },
       });
-      if (!res.ok) throw new Error('Nao foi possivel executar rotina.');
+      if (!res.ok) throw new Error('Não foi possível executar rotina.');
       const body = await res.json();
-      setMensagem(`Rotina executada. Revalidacoes: ${body.revalidacoesCriadas ?? 0}. Inativados: ${body.curriculosInativados ?? 0}.`);
+      setMensagem(`Rotina executada. Revalidações: ${body.revalidacoesCriadas ?? 0}. Inativados: ${body.curriculosInativados ?? 0}.`);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -313,9 +313,9 @@ export default function AdminPage() {
         method: 'POST',
         headers: { 'x-admin-token': token },
       });
-      if (!res.ok) throw new Error('Nao foi possivel enviar os avisos.');
+      if (!res.ok) throw new Error('Não foi possível enviar os avisos.');
       const body = await res.json();
-      setMensagem(`Avisos processados. Empresas elegiveis: ${body.empresasElegiveis ?? 0}. E-mails enviados: ${body.emailsEnviados ?? 0}. Erros: ${body.emailsComErro ?? 0}.`);
+      setMensagem(`Avisos processados. Empresas elegíveis: ${body.empresasElegiveis ?? 0}. E-mails enviados: ${body.emailsEnviados ?? 0}. Erros: ${body.emailsComErro ?? 0}.`);
       await carregarEmpresas();
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -330,7 +330,7 @@ export default function AdminPage() {
     setCarregando(true);
     try {
       const res = await fetch(`${API_URL}/admin/indicadores?meses=12`, { headers: { 'x-admin-token': token } });
-      if (!res.ok) throw new Error('Nao foi possivel carregar indicadores.');
+      if (!res.ok) throw new Error('Não foi possível carregar indicadores.');
       setIndicadores(await res.json());
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -345,7 +345,7 @@ export default function AdminPage() {
     setCarregando(true);
     try {
       const res = await fetch(`${API_URL}/admin/indicadores/exportar?meses=12`, { headers: { 'x-admin-token': token } });
-      if (!res.ok) throw new Error('Nao foi possivel exportar indicadores.');
+      if (!res.ok) throw new Error('Não foi possível exportar indicadores.');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -508,7 +508,7 @@ export default function AdminPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-xl font-semibold">Indicadores executivos</h2>
-              <p className="text-sm text-slate-600">Uso, revalidacao e contratacoes dos ultimos 12 meses.</p>
+              <p className="text-sm text-slate-600">Uso, revalidação e contratações dos últimos 12 meses.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <button onClick={carregarIndicadores} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
@@ -524,10 +524,10 @@ export default function AdminPage() {
             <div className="mt-4 grid gap-4">
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 {[
-                  ['Curriculos ativos', indicadores.resumo.ativos],
-                  ['Curriculos inativos', indicadores.resumo.inativos],
+                  ['Currículos ativos', indicadores.resumo.ativos],
+                  ['Currículos inativos', indicadores.resumo.inativos],
                   ['Empresas aprovadas', indicadores.resumo.empresasAprovadas],
-                  ['Taxa de revalidacao', `${indicadores.resumo.taxaRevalidacao}%`],
+                  ['Taxa de revalidação', `${indicadores.resumo.taxaRevalidacao}%`],
                 ].map(([label, value]) => (
                   <div key={label} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                     <p className="text-xs font-semibold uppercase text-slate-500">{label}</p>
@@ -546,12 +546,12 @@ export default function AdminPage() {
                         <strong>{item.visualizacoes}</strong>
                       </div>
                     ))}
-                    {indicadores.rankingUsoEmpresas.length === 0 && <p className="text-sm text-slate-600">Sem visualizacoes no periodo.</p>}
+                    {indicadores.rankingUsoEmpresas.length === 0 && <p className="text-sm text-slate-600">Sem visualizações no período.</p>}
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-slate-200 p-4">
-                  <h3 className="font-semibold">Contratacoes por periodo</h3>
+                  <h3 className="font-semibold">Contratações por período</h3>
                   <div className="mt-3 grid gap-2">
                     {indicadores.contratacoesPorPeriodo.map((item) => (
                       <div key={item.periodo} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm">
@@ -559,7 +559,7 @@ export default function AdminPage() {
                         <strong>{item.total}</strong>
                       </div>
                     ))}
-                    {indicadores.contratacoesPorPeriodo.length === 0 && <p className="text-sm text-slate-600">Sem contratacoes registradas no periodo.</p>}
+                    {indicadores.contratacoesPorPeriodo.length === 0 && <p className="text-sm text-slate-600">Sem contratações registradas no período.</p>}
                   </div>
                 </div>
               </div>
@@ -599,7 +599,7 @@ export default function AdminPage() {
                   </div>
                   <div className="mt-2 grid gap-1 text-xs text-slate-500">
                     <p>Cadastro: {empresa.diasDesdeCadastro ?? 0} dias{empresa.dataCadastro ? ` (${formatarData(empresa.dataCadastro)})` : ''}</p>
-                    <p>Ultimo aviso: {empresa.dataUltimoAvisoSenha ? formatarData(empresa.dataUltimoAvisoSenha) : 'ainda nao enviado'}</p>
+                    <p>Último aviso: {empresa.dataUltimoAvisoSenha ? formatarData(empresa.dataUltimoAvisoSenha) : 'ainda não enviado'}</p>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => atualizarEmpresa(empresa.id, 'aprovada')} className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white">Aprovar</button>
@@ -615,7 +615,7 @@ export default function AdminPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold">Logs de acesso</h2>
-                <p className="text-sm text-slate-600">Visualizacoes e acoes feitas por empresas.</p>
+                <p className="text-sm text-slate-600">Visualizações e ações feitas por empresas.</p>
               </div>
               <button onClick={carregarLogs} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                 Carregar logs
@@ -636,14 +636,14 @@ export default function AdminPage() {
         <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h2 className="text-xl font-semibold">Rotina de revalidacao</h2>
-              <p className="text-sm text-slate-600">Registra alertas apos 90 dias e inativa curriculos sem resposta apos 120 dias.</p>
+              <h2 className="text-xl font-semibold">Rotina de revalidação</h2>
+              <p className="text-sm text-slate-600">Registra alertas após 90 dias e inativa currículos sem resposta após 120 dias.</p>
             </div>
             <button onClick={executarRevalidacao} disabled={!token || carregando} className="rounded-lg bg-singreen px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
               Executar agora
             </button>
             <button onClick={backfillEmbeddings} disabled={!token || carregando} className="rounded-lg border border-brand-600 px-4 py-3 text-sm font-semibold text-brand-700 disabled:opacity-60">
-              Atualizar busca semantica
+              Atualizar busca semântica
             </button>
           </div>
         </section>
@@ -663,11 +663,11 @@ export default function AdminPage() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">
-                      {candidato.cargoPretendido ?? experiencia?.cargo ?? 'Cargo nao informado'} - {candidato.areaPretendida ?? experiencia?.area ?? 'Area nao informada'} - {candidato.regiao}
+                      {candidato.cargoPretendido ?? experiencia?.cargo ?? 'Cargo não informado'} - {candidato.areaPretendida ?? experiencia?.area ?? 'Área não informada'} - {candidato.regiao}
                       {candidato.uf ? `/${candidato.uf}` : ''}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      {candidato.inicioImediato && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Inicio imediato</span>}
+                      {candidato.inicioImediato && <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">Início imediato</span>}
                       {candidato.experienciaSetorPapel && <span className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">Setor papel/embalagem</span>}
                       {candidato.habilidades.map((habilidade) => (
                         <span key={habilidade} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
@@ -677,7 +677,7 @@ export default function AdminPage() {
                     </div>
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button onClick={() => criarComunicacao(candidato.id)} className="rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700">
-                        Registrar comunicacao
+                        Registrar comunicação
                       </button>
                       <button onClick={() => excluirCandidato(candidato.id)} className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred">
                         Excluir LGPD
@@ -708,23 +708,23 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Pretensão</dt>
-                      <dd>{candidato.pretensaoSalarial?.replaceAll('_', ' ') ?? 'Nao informada'}</dd>
+                      <dd>{candidato.pretensaoSalarial?.replaceAll('_', ' ') ?? 'Não informada'}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Experiência total</dt>
-                      <dd>{candidato.anosExperienciaTotal?.replaceAll('_', ' ') ?? 'Nao informada'}</dd>
+                      <dd>{candidato.anosExperienciaTotal?.replaceAll('_', ' ') ?? 'Não informada'}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Turnos</dt>
-                      <dd>{candidato.turnos?.length ? candidato.turnos.join(', ') : 'Nao informado'}</dd>
+                      <dd>{candidato.turnos?.length ? candidato.turnos.join(', ') : 'Não informado'}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Mudança</dt>
-                      <dd>{candidato.disponibilidadeMudanca ? 'Disponivel' : 'Nao informado'}</dd>
+                      <dd>{candidato.disponibilidadeMudanca ? 'Disponível' : 'Não informado'}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">CNH</dt>
-                      <dd>{candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Nao'}</dd>
+                      <dd>{candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Não'}</dd>
                     </div>
                   </dl>
                 </div>
