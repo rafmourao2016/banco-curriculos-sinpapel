@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, ForbiddenException, Get, Headers, Header, Param, Patch, Post, Query, Res } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Delete, ForbiddenException, Get, Headers, Header, Param, Patch, Post, Query, Res } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
 import { Response } from 'express';
 import { PrismaService } from '../common/prisma.service';
@@ -91,6 +91,51 @@ export class AdminController {
       where: { id },
       data: { statusAprovacao },
       select: { id: true, razaoSocial: true, email: true, statusAprovacao: true },
+    });
+  }
+
+  @Patch('empresas/:id/email')
+  async atualizarEmailEmpresa(
+    @Headers('x-admin-token') token: string | undefined,
+    @Param('id') id: string,
+    @Body('email') email: string,
+  ) {
+    this.validarToken(token);
+    const novoEmail = email?.trim().toLowerCase();
+    if (!novoEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(novoEmail)) {
+      throw new BadRequestException('Informe um e-mail valido.');
+    }
+
+    const empresa = await this.prisma.empresa.findUnique({ where: { id }, select: { id: true, email: true } });
+    if (!empresa) throw new BadRequestException('Empresa nao encontrada.');
+
+    const emailEmUso = await this.prisma.empresa.findFirst({
+      where: { email: novoEmail, NOT: { id } },
+      select: { id: true },
+    });
+    if (emailEmUso) {
+      throw new ConflictException('Ja existe uma empresa usando este e-mail.');
+    }
+
+    const usuarioEmUso = await this.prisma.usuarioEmpresa.findFirst({
+      where: { email: novoEmail, NOT: { empresaId: id } },
+      select: { id: true },
+    });
+    if (usuarioEmUso) {
+      throw new ConflictException('Ja existe um usuario de empresa usando este e-mail.');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.usuarioEmpresa.updateMany({
+        where: { empresaId: id, email: empresa.email },
+        data: { email: novoEmail },
+      });
+      await tx.recuperacaoSenha.deleteMany({ where: { email: empresa.email, tipo: 'empresa' } });
+      return tx.empresa.update({
+        where: { id },
+        data: { email: novoEmail },
+        select: { id: true, razaoSocial: true, email: true, statusAprovacao: true },
+      });
     });
   }
 

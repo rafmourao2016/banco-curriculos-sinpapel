@@ -90,6 +90,7 @@ export default function AdminPage() {
   const [carregando, setCarregando] = useState(false);
   const [consultado, setConsultado] = useState(false);
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+  const [emailsEmpresas, setEmailsEmpresas] = useState<Record<string, string>>({});
   const [logs, setLogs] = useState<LogAcesso[]>([]);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [indicadores, setIndicadores] = useState<Indicadores | null>(null);
@@ -126,6 +127,7 @@ export default function AdminPage() {
     setBusca('');
     setCandidatos([]);
     setEmpresas([]);
+    setEmailsEmpresas({});
     setLogs([]);
     setIndicadores(null);
     setErro(null);
@@ -172,7 +174,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(`${API_URL}/admin/empresas`, { headers: { 'x-admin-token': token } });
       if (!res.ok) throw new Error('Não foi possível carregar empresas.');
-      setEmpresas(await res.json());
+      const dados = await res.json();
+      setEmpresas(dados);
+      setEmailsEmpresas(Object.fromEntries(dados.map((empresa: Empresa) => [empresa.id, empresa.email])));
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -192,6 +196,30 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('Não foi possível atualizar a empresa.');
       await carregarEmpresas();
       setMensagem('Empresa atualizada.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    }
+  }
+
+  async function atualizarEmailEmpresa(id: string) {
+    setErro(null);
+    setMensagem(null);
+    const email = emailsEmpresas[id]?.trim().toLowerCase();
+    if (!email) {
+      setErro('Informe o novo e-mail da empresa.');
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/admin/empresas/${id}/email`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
+        body: JSON.stringify({ email }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(body.message ?? 'Não foi possível atualizar o e-mail.');
+      await carregarEmpresas();
+      setMensagem('E-mail de acesso da empresa atualizado.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     }
@@ -572,6 +600,25 @@ export default function AdminPage() {
                   <div className="mt-2 grid gap-1 text-xs text-slate-500">
                     <p>Cadastro: {empresa.diasDesdeCadastro ?? 0} dias{empresa.dataCadastro ? ` (${formatarData(empresa.dataCadastro)})` : ''}</p>
                     <p>Último aviso: {empresa.dataUltimoAvisoSenha ? formatarData(empresa.dataUltimoAvisoSenha) : 'ainda não enviado'}</p>
+                  </div>
+                  <div className="mt-3 grid gap-2 rounded-lg bg-slate-50 p-3">
+                    <label className="grid gap-1 text-xs font-semibold text-slate-600">
+                      E-mail de acesso
+                      <input
+                        type="email"
+                        value={emailsEmpresas[empresa.id] ?? empresa.email}
+                        onChange={(event) => setEmailsEmpresas((atuais) => ({ ...atuais, [empresa.id]: event.target.value }))}
+                        className="min-w-0 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-normal text-slate-950 outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => atualizarEmailEmpresa(empresa.id)}
+                      disabled={carregando || (emailsEmpresas[empresa.id] ?? empresa.email) === empresa.email}
+                      className="justify-self-start rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700 disabled:opacity-50"
+                    >
+                      Salvar e-mail
+                    </button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => atualizarEmpresa(empresa.id, 'aprovada')} className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white">Aprovar</button>
