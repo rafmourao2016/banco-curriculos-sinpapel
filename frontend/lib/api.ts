@@ -34,16 +34,14 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
     pcd: dados.pcd,
     pcdObservacao: dados.pcdObservacao?.trim() || undefined,
     senha: dados.senha,
-    experiencias: [
-      {
-        empresa: dados.empresaExperiencia?.trim() || undefined,
-        cargo: dados.cargoAtual,
-        area: dados.areaAtual,
-        dataInicio: dados.dataInicioExperiencia,
-        dataFim: dados.dataFimExperiencia || undefined,
-        descricao: dados.descricaoExperiencia?.trim() || undefined,
-      },
-    ],
+    experiencias: dados.experiencias.map((experiencia) => ({
+      empresa: experiencia.empresa?.trim() || undefined,
+      cargo: experiencia.cargo,
+      area: experiencia.area,
+      dataInicio: experiencia.dataInicio,
+      dataFim: experiencia.dataFim || undefined,
+      descricao: experiencia.descricao?.trim() || undefined,
+    })),
     formacoes: [
       {
         nivel: dados.escolaridade,
