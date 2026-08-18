@@ -115,6 +115,8 @@ model Empresa {
   statusAprovacao  String   @default("pendente") @map("status_aprovacao")
   twoFaAtivo       Boolean  @default(false) @map("two_fa_ativo")
   twoFaSecret      String?  @map("two_fa_secret")
+  dataCadastro     DateTime @default(now()) @map("data_cadastro")
+  dataUltimoAvisoSenha DateTime? @map("data_ultimo_aviso_senha")
 
   usuarios             UsuarioEmpresa[]
   vagasNecessidade      VagaNecessidade[]

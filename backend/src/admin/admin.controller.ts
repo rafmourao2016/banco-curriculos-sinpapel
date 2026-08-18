@@ -68,7 +68,16 @@ export class AdminController {
       orderBy: { razaoSocial: 'asc' },
       take: 100,
     });
-    return empresas.map(({ senhaHash: _senhaHash, twoFaSecret: _twoFaSecret, ...empresa }) => empresa);
+    const agora = Date.now();
+    const diaMs = 24 * 60 * 60 * 1000;
+    return empresas.map(({ senhaHash: _senhaHash, twoFaSecret: _twoFaSecret, ...empresa }) => {
+      const diasDesdeCadastro = Math.max(0, Math.floor((agora - empresa.dataCadastro.getTime()) / diaMs));
+      return {
+        ...empresa,
+        diasDesdeCadastro,
+        cadastroMaisDe30Dias: diasDesdeCadastro >= 30,
+      };
+    });
   }
 
   @Patch('empresas/:id/status')

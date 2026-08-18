@@ -47,6 +47,10 @@ type Empresa = {
   cnpj: string;
   email: string;
   statusAprovacao: string;
+  dataCadastro?: string;
+  dataUltimoAvisoSenha?: string | null;
+  diasDesdeCadastro?: number;
+  cadastroMaisDe30Dias?: boolean;
 };
 
 type LogAcesso = {
@@ -293,6 +297,26 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('Nao foi possivel executar rotina.');
       const body = await res.json();
       setMensagem(`Rotina executada. Revalidacoes: ${body.revalidacoesCriadas ?? 0}. Inativados: ${body.curriculosInativados ?? 0}.`);
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function executarAvisoEmpresas() {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/jobs/empresas-aviso-senha`, {
+        method: 'POST',
+        headers: { 'x-admin-token': token },
+      });
+      if (!res.ok) throw new Error('Nao foi possivel enviar os avisos.');
+      const body = await res.json();
+      setMensagem(`Avisos processados. Empresas elegiveis: ${body.empresasElegiveis ?? 0}. E-mails enviados: ${body.emailsEnviados ?? 0}. Erros: ${body.emailsComErro ?? 0}.`);
+      await carregarEmpresas();
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -548,17 +572,35 @@ export default function AdminPage() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-xl font-semibold">Empresas</h2>
-                <p className="text-sm text-slate-600">Aprove ou reprove acessos de empresas.</p>
+                <p className="text-sm text-slate-600">Aprove acessos e acompanhe cadastros com mais de 30 dias.</p>
               </div>
-              <button onClick={carregarEmpresas} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
-                Carregar empresas
-              </button>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={carregarEmpresas} disabled={!token || carregando} className="rounded-lg bg-brand-600 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                  Carregar empresas
+                </button>
+                <button onClick={executarAvisoEmpresas} disabled={!token || carregando} className="rounded-lg border border-brand-600 px-4 py-3 text-sm font-semibold text-brand-700 disabled:opacity-60">
+                  Enviar avisos 30 dias
+                </button>
+              </div>
             </div>
             <div className="mt-4 grid gap-2">
               {empresas.map((empresa) => (
                 <div key={empresa.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-                  <p className="font-semibold">{empresa.razaoSocial}</p>
-                  <p className="text-slate-600">{empresa.email} - {empresa.statusAprovacao}</p>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold">{empresa.razaoSocial}</p>
+                      <p className="text-slate-600">{empresa.email} - {empresa.statusAprovacao}</p>
+                    </div>
+                    {empresa.cadastroMaisDe30Dias && (
+                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                        Cadastro com mais de 30 dias
+                      </span>
+                    )}
+                  </div>
+                  <div className="mt-2 grid gap-1 text-xs text-slate-500">
+                    <p>Cadastro: {empresa.diasDesdeCadastro ?? 0} dias{empresa.dataCadastro ? ` (${formatarData(empresa.dataCadastro)})` : ''}</p>
+                    <p>Ultimo aviso: {empresa.dataUltimoAvisoSenha ? formatarData(empresa.dataUltimoAvisoSenha) : 'ainda nao enviado'}</p>
+                  </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => atualizarEmpresa(empresa.id, 'aprovada')} className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white">Aprovar</button>
                     <button onClick={() => atualizarEmpresa(empresa.id, 'reprovada')} className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred">Reprovar</button>

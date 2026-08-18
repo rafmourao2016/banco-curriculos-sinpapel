@@ -26,6 +26,22 @@ export class JobsController {
     return this.executar();
   }
 
+  @Post('empresas-aviso-senha')
+  executarAvisoEmpresasManual(@Headers('x-admin-token') token: string | undefined) {
+    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+      return { status: 'bloqueado' };
+    }
+    return this.executarAvisoEmpresas();
+  }
+
+  @Get('empresas-aviso-senha')
+  executarAvisoEmpresasCron(@Headers('user-agent') userAgent: string | undefined, @Query('token') token?: string) {
+    if (!userAgent?.includes('vercel-cron') && token !== process.env.ADMIN_TOKEN) {
+      return { status: 'bloqueado' };
+    }
+    return this.executarAvisoEmpresas();
+  }
+
   private async executar() {
     const agora = new Date();
     const limiteRevalidacao = new Date(agora);
@@ -147,6 +163,84 @@ export class JobsController {
     }
   }
 
+  private async executarAvisoEmpresas() {
+    const agora = new Date();
+    const limiteCadastro = new Date(agora);
+    limiteCadastro.setDate(limiteCadastro.getDate() - 30);
+    const limiteReenvio = new Date(agora);
+    limiteReenvio.setDate(limiteReenvio.getDate() - 30);
+
+    const empresas = await this.prisma.empresa.findMany({
+      where: {
+        statusAprovacao: 'aprovada',
+        dataCadastro: { lte: limiteCadastro },
+        OR: [
+          { dataUltimoAvisoSenha: null },
+          { dataUltimoAvisoSenha: { lte: limiteReenvio } },
+        ],
+      },
+      select: { id: true, razaoSocial: true, email: true },
+      take: 200,
+      orderBy: { dataCadastro: 'asc' },
+    });
+
+    let emailsEnviados = 0;
+    let emailsComErro = 0;
+
+    for (const empresa of empresas) {
+      const resultado = await this.criarEEnviarAvisoEmpresa(empresa, agora);
+      if (resultado === 'enviado') emailsEnviados += 1;
+      if (resultado !== 'enviado') emailsComErro += 1;
+    }
+
+    return {
+      status: 'ok',
+      empresasElegiveis: empresas.length,
+      emailsEnviados,
+      emailsComErro,
+    };
+  }
+
+  private async criarEEnviarAvisoEmpresa(
+    empresa: { id: string; razaoSocial: string; email: string },
+    agora: Date,
+  ) {
+    const appUrl = (process.env.APP_URL || 'https://sinpapel.vercel.app').replace(/\/$/, '');
+    const token = randomBytes(32).toString('hex');
+    const tokenHash = createHash('sha256').update(token).digest('hex');
+    const expiraEm = new Date(agora);
+    expiraEm.setHours(expiraEm.getHours() + 1);
+
+    await this.prisma.recuperacaoSenha.deleteMany({ where: { email: empresa.email, tipo: 'empresa' } });
+    await this.prisma.recuperacaoSenha.create({
+      data: {
+        email: empresa.email,
+        tipo: 'empresa',
+        tokenHash,
+        expiraEm,
+      },
+    });
+
+    const acessoUrl = `${appUrl}/empresa`;
+    const redefinirUrl = `${appUrl}/recuperar-senha?token=${encodeURIComponent(token)}&tipo=empresa`;
+
+    try {
+      await this.emailService.send({
+        to: empresa.email,
+        subject: 'Atualizacao de acesso - Banco de Curriculos SINPAPEL',
+        html: this.emailAvisoEmpresaHtml(empresa.razaoSocial, acessoUrl, redefinirUrl),
+      });
+
+      await this.prisma.empresa.update({
+        where: { id: empresa.id },
+        data: { dataUltimoAvisoSenha: agora },
+      });
+      return 'enviado';
+    } catch {
+      return 'erro_envio';
+    }
+  }
+
   private emailRevalidacaoHtml(nome: string, confirmarUrl: string, removerUrl: string) {
     return `
       <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.5;">
@@ -160,6 +254,27 @@ export class JobsController {
           <a href="${removerUrl}" style="background: #ffffff; color: #991b1b; padding: 11px 17px; text-decoration: none; border: 1px solid #991b1b; border-radius: 6px; font-weight: 700;">Remover meu currículo</a>
         </p>
         <p>Se você não reconhece este cadastro, use o botão de remoção ou entre em contato com o SINPAPEL.</p>
+      </div>
+    `;
+  }
+
+  private emailAvisoEmpresaHtml(razaoSocial: string, acessoUrl: string, redefinirUrl: string) {
+    return `
+      <div style="font-family: Arial, sans-serif; color: #1f2937; line-height: 1.55;">
+        <p>Associados,</p>
+        <p>O Banco de Curriculos SINPAPEL esta com novos curriculos cadastrados e disponiveis para consulta pela empresa ${this.escapeHtml(razaoSocial)}.</p>
+        <p>Acesse a plataforma e confira os candidatos que atendem as vagas em aberto:</p>
+        <p style="margin: 24px 0;">
+          <a href="${acessoUrl}" style="background: #7a3f33; color: #ffffff; padding: 12px 18px; text-decoration: none; border-radius: 6px; font-weight: 700;">Acessar plataforma</a>
+        </p>
+        <p>Por seguranca, pedimos que atualize a senha de acesso vinculada ao e-mail cadastrado na sua empresa. Essa atualizacao simples ajuda a manter os dados protegidos e o acesso exclusivo aos responsaveis autorizados.</p>
+        <p style="margin: 24px 0;">
+          <a href="${redefinirUrl}" style="background: #ffffff; color: #7a3f33; padding: 11px 17px; text-decoration: none; border: 1px solid #7a3f33; border-radius: 6px; font-weight: 700;">Alterar senha de acesso</a>
+        </p>
+        <p>Importante: caso sua empresa precise trocar o e-mail de acesso a plataforma, nao e possivel altera-lo diretamente pelo sistema. Basta responder este e-mail informando o novo endereco, e o SINPAPEL fara a liberacao do acesso.</p>
+        <p>Qualquer duvida, estamos a disposicao.</p>
+        <p>Atenciosamente,<br/>SINPAPEL</p>
+        <p style="font-size: 12px; color: #64748b;">O link de alteracao de senha expira em 1 hora e pode ser usado uma unica vez.</p>
       </div>
     `;
   }
