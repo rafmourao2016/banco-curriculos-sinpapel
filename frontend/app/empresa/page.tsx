@@ -43,6 +43,8 @@ export default function EmpresaPage() {
   const [empresaNome, setEmpresaNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [cnpjEmpresa, setCnpjEmpresa] = useState('');
+  const [erroCnpj, setErroCnpj] = useState<string | null>(null);
   const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
   const [codigo2fa, setCodigo2fa] = useState('');
   const [exige2fa, setExige2fa] = useState(false);
@@ -62,12 +64,20 @@ export default function EmpresaPage() {
     setMensagem(null);
     setCarregando(true);
     const form = new FormData(event.currentTarget);
-    const cnpj = apenasDigitos(String(form.get('cnpj') ?? ''));
+    const cnpj = apenasDigitos(cnpjEmpresa);
+    if (!cnpj) {
+      setErroCnpj('CNPJ obrigatório.');
+      setErro('Informe o CNPJ da empresa.');
+      setCarregando(false);
+      return;
+    }
     if (!cnpjValido(cnpj)) {
+      setErroCnpj('CNPJ inválido. Confira o número informado.');
       setErro('CNPJ inválido. Confira o número informado.');
       setCarregando(false);
       return;
     }
+    setErroCnpj(null);
     try {
       const res = await fetch(`${API_URL}/empresas`, {
         method: 'POST',
@@ -423,7 +433,29 @@ export default function EmpresaPage() {
               ) : (
                 <form onSubmit={cadastrarEmpresa} className="mt-4 grid gap-3">
                   <input name="razaoSocial" required minLength={2} className={inputClasses} placeholder="Razao social" />
-                  <input name="cnpj" required minLength={14} maxLength={18} inputMode="numeric" className={inputClasses} placeholder="00.000.000/0000-00" />
+                  <div className="grid gap-1">
+                    <input
+                      name="cnpj"
+                      required
+                      aria-invalid={Boolean(erroCnpj)}
+                      minLength={14}
+                      maxLength={18}
+                      inputMode="numeric"
+                      className={inputClasses}
+                      placeholder="CNPJ obrigatório - 00.000.000/0000-00"
+                      value={cnpjEmpresa}
+                      onChange={(event) => {
+                        setCnpjEmpresa(event.target.value);
+                        if (erroCnpj) setErroCnpj(null);
+                      }}
+                      onBlur={() => {
+                        const cnpj = apenasDigitos(cnpjEmpresa);
+                        if (!cnpj) setErroCnpj('CNPJ obrigatório.');
+                        else if (!cnpjValido(cnpj)) setErroCnpj('CNPJ inválido. Confira o número informado.');
+                      }}
+                    />
+                    {erroCnpj && <p className="text-sm text-red-600">{erroCnpj}</p>}
+                  </div>
                   <input name="email" required className={inputClasses} type="email" placeholder="E-mail" />
                   <input name="senha" required minLength={8} className={inputClasses} type="password" placeholder="Crie uma senha" />
                   <button disabled={carregando} className="rounded-lg bg-singreen px-5 py-3 font-semibold text-white disabled:opacity-60">

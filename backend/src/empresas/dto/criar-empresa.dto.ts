@@ -6,6 +6,7 @@ export class CriarEmpresaDto {
   razaoSocial: string;
 
   @IsString()
+  @MinLength(14, { message: 'Informe um CNPJ valido.' })
   @MaxLength(18)
   cnpj: string;
 
