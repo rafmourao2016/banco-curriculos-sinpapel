@@ -1,4 +1,5 @@
 import { CadastroFormValues } from './cadastroSchema';
+import { apenasDigitos } from './documentos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
@@ -12,7 +13,7 @@ function listaPorVirgula(valor?: string) {
 export async function cadastrarCandidato(dados: CadastroFormValues) {
   const payload = {
     nome: dados.nome,
-    cpf: dados.cpf,
+    cpf: apenasDigitos(dados.cpf),
     email: dados.email,
     telefone: dados.telefone,
     dataNascimento: dados.dataNascimento,

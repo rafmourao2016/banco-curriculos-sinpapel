@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
+import { apenasDigitos, cnpjValido } from '../../lib/documentos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const inputClasses = 'w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10';
@@ -56,13 +57,19 @@ export default function EmpresaPage() {
     setMensagem(null);
     setCarregando(true);
     const form = new FormData(event.currentTarget);
+    const cnpj = apenasDigitos(String(form.get('cnpj') ?? ''));
+    if (!cnpjValido(cnpj)) {
+      setErro('CNPJ inválido. Confira o número informado.');
+      setCarregando(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/empresas`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           razaoSocial: String(form.get('razaoSocial') ?? ''),
-          cnpj: String(form.get('cnpj') ?? ''),
+          cnpj,
           email: String(form.get('email') ?? ''),
           senha: String(form.get('senha') ?? ''),
         }),
@@ -411,7 +418,7 @@ export default function EmpresaPage() {
               ) : (
                 <form onSubmit={cadastrarEmpresa} className="mt-4 grid gap-3">
                   <input name="razaoSocial" required minLength={2} className={inputClasses} placeholder="Razao social" />
-                  <input name="cnpj" required minLength={11} className={inputClasses} placeholder="CNPJ" />
+                  <input name="cnpj" required minLength={14} maxLength={18} inputMode="numeric" className={inputClasses} placeholder="00.000.000/0000-00" />
                   <input name="email" required className={inputClasses} type="email" placeholder="E-mail" />
                   <input name="senha" required minLength={8} className={inputClasses} type="password" placeholder="Crie uma senha" />
                   <button disabled={carregando} className="rounded-lg bg-singreen px-5 py-3 font-semibold text-white disabled:opacity-60">

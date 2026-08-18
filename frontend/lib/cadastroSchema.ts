@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { cpfValido } from './documentos';
 
 export const escolaridadeOptions = [
   { value: 'FUNDAMENTAL_INCOMPLETO', label: 'Fundamental incompleto' },
@@ -69,7 +70,7 @@ const experienciaSchema = z.object({
 
 export const cadastroSchema = z.object({
   nome: z.string().min(3, 'Informe seu nome completo'),
-  cpf: z.string().min(11, 'CPF invalido').max(14),
+  cpf: z.string().min(11, 'CPF inválido').max(14).refine(cpfValido, 'CPF inválido. Confira o número informado.'),
   email: z.string().email('E-mail invalido'),
   telefone: z.string().min(10, 'Telefone invalido'),
   dataNascimento: z.string().min(1, 'Informe sua data de nascimento'),

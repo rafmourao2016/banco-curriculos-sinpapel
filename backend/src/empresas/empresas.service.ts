@@ -7,6 +7,7 @@ import { PrismaService } from '../common/prisma.service';
 import { CriarEmpresaDto } from './dto/criar-empresa.dto';
 import { gerarCurriculoPdf } from '../common/curriculo-pdf';
 import { gerarEmbedding, vetorPg } from '../common/embedding';
+import { apenasDigitos, cnpjValido } from '../common/documentos';
 
 const semanticCache = new Map<string, { ids: string[]; expiraEm: number }>();
 const SEMANTIC_CACHE_TTL_MS = 5 * 60 * 1000;
@@ -59,8 +60,13 @@ export class EmpresasService {
   }
 
   async cadastrar(dto: CriarEmpresaDto) {
+    const cnpj = apenasDigitos(dto.cnpj);
+    if (!cnpjValido(cnpj)) {
+      throw new BadRequestException('CNPJ invalido. Confira o numero informado.');
+    }
+
     const existente = await this.prisma.empresa.findFirst({
-      where: { OR: [{ cnpj: dto.cnpj }, { email: dto.email }] },
+      where: { OR: [{ cnpj }, { cnpj: dto.cnpj }, { email: dto.email }] },
     });
     if (existente) {
       throw new ConflictException('Ja existe uma empresa cadastrada com este CNPJ ou e-mail.');
@@ -70,7 +76,7 @@ export class EmpresasService {
     const empresa = await this.prisma.empresa.create({
       data: {
         razaoSocial: dto.razaoSocial,
-        cnpj: dto.cnpj,
+        cnpj,
         email: dto.email,
         senhaHash,
         statusAprovacao: 'pendente',

@@ -6,6 +6,7 @@ import { CriarCandidatoDto } from './dto/criar-candidato.dto';
 import { AtualizarCandidatoDto } from './dto/atualizar-candidato.dto';
 import { gerarCurriculoPdf } from '../common/curriculo-pdf';
 import { gerarEmbedding, vetorPg } from '../common/embedding';
+import { apenasDigitos, cpfValido } from '../common/documentos';
 
 @Injectable()
 export class CandidatosService {
@@ -43,8 +44,13 @@ export class CandidatosService {
       throw new BadRequestException('O aceite do termo de consentimento LGPD é obrigatório.');
     }
 
+    const cpf = apenasDigitos(dto.cpf);
+    if (!cpfValido(cpf)) {
+      throw new BadRequestException('CPF invalido. Confira o numero informado.');
+    }
+
     const existente = await this.prisma.candidato.findFirst({
-      where: { OR: [{ cpf: dto.cpf }, { email: dto.email }] },
+      where: { OR: [{ cpf }, { cpf: dto.cpf }, { email: dto.email }] },
     });
     if (existente) {
       throw new ConflictException('Já existe um candidato cadastrado com este CPF ou e-mail.');
@@ -67,7 +73,7 @@ export class CandidatosService {
     const candidato = await this.prisma.candidato.create({
       data: {
         nome: dto.nome,
-        cpf: dto.cpf,
+        cpf,
         email: dto.email,
         telefone: dto.telefone,
         dataNascimento: new Date(dto.dataNascimento),
