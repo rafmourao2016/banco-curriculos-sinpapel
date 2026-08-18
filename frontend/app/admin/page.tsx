@@ -92,7 +92,6 @@ export default function AdminPage() {
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
   const [logs, setLogs] = useState<LogAcesso[]>([]);
   const [mensagem, setMensagem] = useState<string | null>(null);
-  const [atsKey, setAtsKey] = useState<string | null>(null);
   const [indicadores, setIndicadores] = useState<Indicadores | null>(null);
   const [autenticado, setAutenticado] = useState(false);
 
@@ -129,7 +128,6 @@ export default function AdminPage() {
     setEmpresas([]);
     setLogs([]);
     setIndicadores(null);
-    setAtsKey(null);
     setErro(null);
     setMensagem(null);
     setConsultado(false);
@@ -194,25 +192,6 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('Não foi possível atualizar a empresa.');
       await carregarEmpresas();
       setMensagem('Empresa atualizada.');
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
-    }
-  }
-
-  async function gerarChaveAts(id: string) {
-    setErro(null);
-    setMensagem(null);
-    setAtsKey(null);
-    try {
-      const res = await fetch(`${API_URL}/admin/empresas/${id}/api-keys`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-admin-token': token },
-        body: JSON.stringify({ nome: 'ATS' }),
-      });
-      if (!res.ok) throw new Error('Não foi possível gerar chave ATS.');
-      const body = await res.json();
-      setAtsKey(body.apiKey);
-      setMensagem('Chave ATS gerada. Copie agora, ela nao sera exibida novamente.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     }
@@ -497,13 +476,6 @@ export default function AdminPage() {
             {mensagem}
           </p>
         )}
-        {atsKey && (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <p className="font-semibold">Chave ATS gerada</p>
-            <p className="mt-1 break-all">{atsKey}</p>
-          </div>
-        )}
-
         <section className="mt-5 rounded-lg border border-slate-200 bg-white p-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -604,7 +576,6 @@ export default function AdminPage() {
                   <div className="mt-3 flex flex-wrap gap-2">
                     <button onClick={() => atualizarEmpresa(empresa.id, 'aprovada')} className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white">Aprovar</button>
                     <button onClick={() => atualizarEmpresa(empresa.id, 'reprovada')} className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred">Reprovar</button>
-                    <button onClick={() => gerarChaveAts(empresa.id)} className="rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700">Gerar chave ATS</button>
                   </div>
                 </div>
               ))}
