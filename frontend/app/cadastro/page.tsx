@@ -10,6 +10,7 @@ import {
   cadastroSchema,
   CadastroFormValues,
   escolaridadeOptions,
+  formacaoNivelOptions,
   formacaoStatusOptions,
   pretensaoSalarialOptions,
   turnoOptions,
@@ -28,10 +29,6 @@ const experienciaVazia = {
   dataInicio: '',
   dataFim: '',
   descricao: '',
-};
-
-const cursoVazio = {
-  nome: '',
 };
 
 export default function CadastroPage() {
@@ -58,9 +55,9 @@ export default function CadastroPage() {
       complementoEndereco: '',
       inicioImediato: false,
       disponibilidadeMudanca: false,
+      nivelFormacao: 'medio',
       pcd: false,
       experiencias: [experienciaVazia],
-      cursosCertificacoes: [cursoVazio],
     },
   });
 
@@ -68,11 +65,6 @@ export default function CadastroPage() {
     control,
     name: 'experiencias',
   });
-  const { fields: cursos, append: adicionarCurso, remove: removerCurso } = useFieldArray({
-    control,
-    name: 'cursosCertificacoes',
-  });
-
   async function onSubmit(dados: CadastroFormValues) {
     setErroEnvio(null);
     try {
@@ -351,6 +343,16 @@ export default function CadastroPage() {
           </section>
 
           <section className="grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2">
+            <Campo id="nivelFormacao" label="Nivel da formacao" erro={errors.nivelFormacao?.message}>
+              <select id="nivelFormacao" className={inputClasses} {...register('nivelFormacao')}>
+                {formacaoNivelOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </Campo>
+
             <Campo id="cursoFormacao" label="Curso / formacao" erro={errors.cursoFormacao?.message}>
               <input id="cursoFormacao" className={inputClasses} placeholder="Ex.: Ensino medio, Tecnico em mecanica" {...register('cursoFormacao')} />
             </Campo>
@@ -444,43 +446,6 @@ export default function CadastroPage() {
           </section>
 
           <section className="grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2">
-            <div className="grid gap-3">
-              <div className="flex items-center justify-between gap-3">
-                <label className="text-sm font-medium text-gray-700">Cursos e certificações</label>
-                <button
-                  type="button"
-                  onClick={() => adicionarCurso({ ...cursoVazio })}
-                  disabled={cursos.length >= 20}
-                  className="rounded-lg border border-brand-600 px-3 py-2 text-xs font-semibold text-brand-700 disabled:opacity-60"
-                >
-                  + Adicionar curso
-                </button>
-              </div>
-              <div className="grid gap-2">
-                {cursos.map((curso, index) => (
-                  <div key={curso.id} className="grid gap-2 sm:grid-cols-[1fr_auto]">
-                    <Campo id={`cursosCertificacoes.${index}.nome`} label={`Curso ${index + 1}`} erro={errors.cursosCertificacoes?.[index]?.nome?.message}>
-                      <input
-                        id={`cursosCertificacoes.${index}.nome`}
-                        className={inputClasses}
-                        placeholder="Ex.: NR-12, empilhadeira, informática"
-                        {...register(`cursosCertificacoes.${index}.nome`)}
-                      />
-                    </Campo>
-                    {cursos.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removerCurso(index)}
-                        className="self-end rounded-lg border border-sinred px-3 py-3 text-xs font-semibold text-sinred"
-                      >
-                        Remover
-                      </button>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-
             <Campo id="idiomas" label="Idiomas" erro={errors.idiomas?.message}>
               <input id="idiomas" className={inputClasses} placeholder="Ex.: ingles basico, espanhol" {...register('idiomas')} />
             </Campo>

@@ -52,6 +52,17 @@ export const formacaoStatusOptions = [
   { value: 'trancado', label: 'Trancado' },
 ] as const;
 
+export const formacaoNivelOptions = [
+  { value: 'fundamental', label: 'Fundamental' },
+  { value: 'medio', label: 'Medio' },
+  { value: 'tecnico', label: 'Tecnico' },
+  { value: 'superior', label: 'Superior' },
+  { value: 'pos_graduacao', label: 'Pos-graduacao' },
+  { value: 'profissionalizante', label: 'Profissionalizante' },
+  { value: 'certificacao', label: 'Certificacao' },
+  { value: 'outro', label: 'Outro' },
+] as const;
+
 const experienciaSchema = z.object({
   empresa: z.string().max(120, 'Use no maximo 120 caracteres').optional(),
   cargo: z.string().min(2, 'Informe o cargo').max(120, 'Use no maximo 120 caracteres'),
@@ -66,10 +77,6 @@ const experienciaSchema = z.object({
     message: 'A data final nao pode ser anterior a data inicial',
   },
 );
-
-const cursoCertificacaoSchema = z.object({
-  nome: z.string().max(120, 'Use no maximo 120 caracteres').optional(),
-});
 
 export const cadastroSchema = z.object({
   nome: z.string().min(3, 'Informe seu nome completo'),
@@ -103,11 +110,11 @@ export const cadastroSchema = z.object({
   turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),
   inicioImediato: z.boolean(),
   disponibilidadeMudanca: z.boolean(),
+  nivelFormacao: z.enum(['fundamental', 'medio', 'tecnico', 'superior', 'pos_graduacao', 'profissionalizante', 'certificacao', 'outro']),
   cursoFormacao: z.string().min(2, 'Informe o curso ou formacao'),
   instituicaoFormacao: z.string().min(2, 'Informe a instituicao'),
   statusFormacao: z.enum(['cursando', 'concluido', 'trancado']),
   anoFormacao: z.coerce.number().int().min(1950, 'Ano invalido').max(2100, 'Ano invalido'),
-  cursosCertificacoes: z.array(cursoCertificacaoSchema).max(20, 'Informe no maximo 20 cursos').optional(),
   idiomas: z.string().optional(),
   pcd: z.boolean(),
   pcdObservacao: z.string().max(200, 'Use no maximo 200 caracteres').optional(),

@@ -10,12 +10,6 @@ function listaPorVirgula(valor?: string) {
     .filter(Boolean);
 }
 
-function listaCursos(cursos?: Array<{ nome?: string }>) {
-  return (cursos ?? [])
-    .map((curso) => curso.nome?.trim())
-    .filter((curso): curso is string => Boolean(curso));
-}
-
 export async function cadastrarCandidato(dados: CadastroFormValues) {
   const payload = {
     nome: dados.nome,
@@ -41,7 +35,7 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
     turnos: dados.turnos,
     inicioImediato: dados.inicioImediato,
     disponibilidadeMudanca: dados.disponibilidadeMudanca,
-    cursosCertificacoes: listaCursos(dados.cursosCertificacoes),
+    cursosCertificacoes: [],
     idiomas: listaPorVirgula(dados.idiomas),
     pcd: dados.pcd,
     pcdObservacao: dados.pcdObservacao?.trim() || undefined,
@@ -56,7 +50,7 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
     })),
     formacoes: [
       {
-        nivel: dados.escolaridade,
+        nivel: dados.nivelFormacao,
         curso: dados.cursoFormacao,
         instituicao: dados.instituicaoFormacao,
         status: dados.statusFormacao,

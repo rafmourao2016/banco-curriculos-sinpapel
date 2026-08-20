@@ -119,7 +119,7 @@ export async function gerarCurriculoPdf(candidato: CurriculoPdf) {
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
   candidato.formacoes.forEach((formacao) => {
     doc.font('Helvetica-Bold').text(formacao.curso);
-    doc.font('Helvetica').text(`${formacao.instituicao} - ${normalizar(formacao.status)}${formacao.ano ? ` (${formacao.ano})` : ''}`);
+    doc.font('Helvetica').text(`${normalizar(formacao.nivel)} - ${formacao.instituicao} - ${normalizar(formacao.status)}${formacao.ano ? ` (${formacao.ano})` : ''}`);
   });
 
   doc.moveDown(1.1);
