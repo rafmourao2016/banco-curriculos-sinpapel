@@ -78,6 +78,14 @@ const experienciaSchema = z.object({
   },
 );
 
+const formacaoSchema = z.object({
+  curso: z.string().min(2, 'Informe o curso ou formacao'),
+  nivel: z.enum(['fundamental', 'medio', 'tecnico', 'superior', 'pos_graduacao', 'profissionalizante', 'certificacao', 'outro']),
+  instituicao: z.string().min(2, 'Informe a instituicao'),
+  status: z.enum(['cursando', 'concluido', 'trancado']),
+  ano: z.coerce.number().int().min(1950, 'Ano invalido').max(2100, 'Ano invalido'),
+});
+
 export const cadastroSchema = z.object({
   nome: z.string().min(3, 'Informe seu nome completo'),
   cpf: z.string().min(11, 'CPF inválido').max(14).refine(cpfValido, 'CPF inválido. Confira o número informado.'),
@@ -110,11 +118,7 @@ export const cadastroSchema = z.object({
   turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),
   inicioImediato: z.boolean(),
   disponibilidadeMudanca: z.boolean(),
-  nivelFormacao: z.enum(['fundamental', 'medio', 'tecnico', 'superior', 'pos_graduacao', 'profissionalizante', 'certificacao', 'outro']),
-  cursoFormacao: z.string().min(2, 'Informe o curso ou formacao'),
-  instituicaoFormacao: z.string().min(2, 'Informe a instituicao'),
-  statusFormacao: z.enum(['cursando', 'concluido', 'trancado']),
-  anoFormacao: z.coerce.number().int().min(1950, 'Ano invalido').max(2100, 'Ano invalido'),
+  formacoes: z.array(formacaoSchema).min(1, 'Informe ao menos uma formacao').max(10, 'Informe no maximo 10 formacoes'),
   idiomas: z.string().optional(),
   pcd: z.boolean(),
   pcdObservacao: z.string().max(200, 'Use no maximo 200 caracteres').optional(),

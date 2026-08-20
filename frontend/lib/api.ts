@@ -48,15 +48,13 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
       dataFim: experiencia.dataFim || undefined,
       descricao: experiencia.descricao?.trim() || undefined,
     })),
-    formacoes: [
-      {
-        nivel: dados.nivelFormacao,
-        curso: dados.cursoFormacao,
-        instituicao: dados.instituicaoFormacao,
-        status: dados.statusFormacao,
-        ano: dados.anoFormacao,
-      },
-    ],
+    formacoes: dados.formacoes.map((formacao) => ({
+      nivel: formacao.nivel,
+      curso: formacao.curso,
+      instituicao: formacao.instituicao,
+      status: formacao.status,
+      ano: formacao.ano,
+    })),
     habilidades: listaPorVirgula(dados.habilidades),
     aceiteTermoLgpd: dados.aceiteTermoLgpd,
   };

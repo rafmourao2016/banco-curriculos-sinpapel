@@ -31,6 +31,14 @@ const experienciaVazia = {
   descricao: '',
 };
 
+const formacaoVazia = {
+  curso: '',
+  nivel: 'medio' as const,
+  instituicao: '',
+  status: 'cursando' as const,
+  ano: new Date().getFullYear(),
+};
+
 export default function CadastroPage() {
   const [enviado, setEnviado] = useState(false);
   const [erroEnvio, setErroEnvio] = useState<string | null>(null);
@@ -55,9 +63,9 @@ export default function CadastroPage() {
       complementoEndereco: '',
       inicioImediato: false,
       disponibilidadeMudanca: false,
-      nivelFormacao: 'medio',
       pcd: false,
       experiencias: [experienciaVazia],
+      formacoes: [formacaoVazia],
     },
   });
 
@@ -65,6 +73,11 @@ export default function CadastroPage() {
     control,
     name: 'experiencias',
   });
+  const { fields: formacoes, append: adicionarFormacao, remove: removerFormacao } = useFieldArray({
+    control,
+    name: 'formacoes',
+  });
+
   async function onSubmit(dados: CadastroFormValues) {
     setErroEnvio(null);
     try {
@@ -342,38 +355,76 @@ export default function CadastroPage() {
             </Campo>
           </section>
 
-          <section className="grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2">
-            <Campo id="nivelFormacao" label="Nivel da formacao" erro={errors.nivelFormacao?.message}>
-              <select id="nivelFormacao" className={inputClasses} {...register('nivelFormacao')}>
-                {formacaoNivelOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </Campo>
+          <section className="grid gap-4 border-t border-slate-200 pt-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-950">Formacao</h2>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Informe seus cursos e formacoes. Voce pode adicionar ate 10 registros.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => adicionarFormacao({ ...formacaoVazia })}
+                disabled={formacoes.length >= 10}
+                className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                + Adicionar curso
+              </button>
+            </div>
 
-            <Campo id="cursoFormacao" label="Curso / formacao" erro={errors.cursoFormacao?.message}>
-              <input id="cursoFormacao" className={inputClasses} placeholder="Ex.: Ensino medio, Tecnico em mecanica" {...register('cursoFormacao')} />
-            </Campo>
+            {errors.formacoes?.message && (
+              <p role="alert" className="text-sm text-red-600">{errors.formacoes.message}</p>
+            )}
 
-            <Campo id="instituicaoFormacao" label="Instituicao" erro={errors.instituicaoFormacao?.message}>
-              <input id="instituicaoFormacao" className={inputClasses} {...register('instituicaoFormacao')} />
-            </Campo>
+            {formacoes.map((formacao, index) => (
+              <div key={formacao.id} className="grid gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
+                <div className="flex items-center justify-between gap-3 sm:col-span-2">
+                  <h3 className="font-semibold text-brand-700">Curso {index + 1}</h3>
+                  {formacoes.length > 1 && (
+                    <button
+                      type="button"
+                      onClick={() => removerFormacao(index)}
+                      className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred"
+                    >
+                      Remover
+                    </button>
+                  )}
+                </div>
 
-            <Campo id="statusFormacao" label="Situacao da formacao" erro={errors.statusFormacao?.message}>
-              <select id="statusFormacao" className={inputClasses} {...register('statusFormacao')}>
-                {formacaoStatusOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </Campo>
+                <Campo id={`formacoes.${index}.curso`} label="Curso / formacao" erro={errors.formacoes?.[index]?.curso?.message}>
+                  <input id={`formacoes.${index}.curso`} className={inputClasses} placeholder="Ex.: Ensino medio, Tecnico em mecanica" {...register(`formacoes.${index}.curso`)} />
+                </Campo>
 
-            <Campo id="anoFormacao" label="Ano" erro={errors.anoFormacao?.message}>
-              <input id="anoFormacao" type="number" className={inputClasses} placeholder="2026" {...register('anoFormacao')} />
-            </Campo>
+                <Campo id={`formacoes.${index}.nivel`} label="Nivel do curso" erro={errors.formacoes?.[index]?.nivel?.message}>
+                  <select id={`formacoes.${index}.nivel`} className={inputClasses} {...register(`formacoes.${index}.nivel`)}>
+                    {formacaoNivelOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+
+                <Campo id={`formacoes.${index}.instituicao`} label="Instituicao" erro={errors.formacoes?.[index]?.instituicao?.message}>
+                  <input id={`formacoes.${index}.instituicao`} className={inputClasses} {...register(`formacoes.${index}.instituicao`)} />
+                </Campo>
+
+                <Campo id={`formacoes.${index}.status`} label="Situacao da formacao" erro={errors.formacoes?.[index]?.status?.message}>
+                  <select id={`formacoes.${index}.status`} className={inputClasses} {...register(`formacoes.${index}.status`)}>
+                    {formacaoStatusOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                </Campo>
+
+                <Campo id={`formacoes.${index}.ano`} label="Ano" erro={errors.formacoes?.[index]?.ano?.message}>
+                  <input id={`formacoes.${index}.ano`} type="number" className={inputClasses} placeholder="2026" {...register(`formacoes.${index}.ano`)} />
+                </Campo>
+              </div>
+            ))}
           </section>
 
           <section className="grid gap-4 border-t border-slate-200 pt-5">
