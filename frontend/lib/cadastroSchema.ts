@@ -29,7 +29,6 @@ export const pretensaoSalarialOptions = [
   { value: '2501_3500', label: 'R$ 2.501 a R$ 3.500' },
   { value: '3501_5000', label: 'R$ 3.501 a R$ 5.000' },
   { value: 'acima_5000', label: 'Acima de R$ 5.000' },
-  { value: 'a_combinar', label: 'A combinar' },
 ] as const;
 
 export const anosExperienciaOptions = [
@@ -98,7 +97,7 @@ export const cadastroSchema = z.object({
   categoriaCnh: z.string().optional(),
   areaPretendida: z.enum(['producao', 'manutencao', 'administrativo', 'logistica', 'qualidade', 'comercial', 'ti', 'engenharia', 'outra']),
   cargoPretendido: z.string().min(2, 'Informe o cargo pretendido'),
-  pretensaoSalarial: z.enum(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000', 'a_combinar']),
+  pretensaoSalarial: z.enum(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000']),
   experienciaSetorPapel: z.boolean(),
   anosExperienciaTotal: z.enum(['sem_experiencia', 'ate_1_ano', '1_3_anos', '3_5_anos', 'mais_5_anos']),
   turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),

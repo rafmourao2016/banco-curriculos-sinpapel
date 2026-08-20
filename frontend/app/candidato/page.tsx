@@ -285,7 +285,7 @@ export default function CandidatoPage() {
               <select name="areaPretendida" defaultValue={perfil.areaPretendida ?? 'producao'} className={inputClasses}>
                 {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
-              <select name="pretensaoSalarial" defaultValue={perfil.pretensaoSalarial ?? 'a_combinar'} className={inputClasses}>
+              <select name="pretensaoSalarial" defaultValue={perfil.pretensaoSalarial === 'a_combinar' ? 'ate_1500' : perfil.pretensaoSalarial ?? 'ate_1500'} className={inputClasses}>
                 {pretensaoSalarialOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               <select name="anosExperienciaTotal" defaultValue={perfil.anosExperienciaTotal ?? 'sem_experiencia'} className={inputClasses}>
