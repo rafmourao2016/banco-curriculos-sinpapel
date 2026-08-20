@@ -65,7 +65,7 @@ export default function CadastroPage() {
       disponibilidadeMudanca: false,
       pcd: false,
       experiencias: [experienciaVazia],
-      formacoes: [formacaoVazia],
+      formacoes: [],
     },
   });
 
@@ -360,7 +360,7 @@ export default function CadastroPage() {
               <div>
                 <h2 className="text-lg font-semibold text-slate-950">Formacao</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Informe seus cursos e formacoes. Voce pode adicionar ate 10 registros.
+                  Se tiver cursos ou formacoes, adicione aqui. Voce pode incluir ate 10 registros.
                 </p>
               </div>
               <button
@@ -369,7 +369,7 @@ export default function CadastroPage() {
                 disabled={formacoes.length >= 10}
                 className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                + Adicionar curso
+                + Adicionar formacao
               </button>
             </div>
 
@@ -377,19 +377,23 @@ export default function CadastroPage() {
               <p role="alert" className="text-sm text-red-600">{errors.formacoes.message}</p>
             )}
 
+            {formacoes.length === 0 && (
+              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
+                Nenhuma formacao adicionada. Este campo e opcional.
+              </div>
+            )}
+
             {formacoes.map((formacao, index) => (
               <div key={formacao.id} className="grid gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
                 <div className="flex items-center justify-between gap-3 sm:col-span-2">
-                  <h3 className="font-semibold text-brand-700">Curso {index + 1}</h3>
-                  {formacoes.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removerFormacao(index)}
-                      className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred"
-                    >
-                      Remover
-                    </button>
-                  )}
+                  <h3 className="font-semibold text-brand-700">Formacao {index + 1}</h3>
+                  <button
+                    type="button"
+                    onClick={() => removerFormacao(index)}
+                    className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred"
+                  >
+                    Remover
+                  </button>
                 </div>
 
                 <Campo id={`formacoes.${index}.curso`} label="Curso / formacao" erro={errors.formacoes?.[index]?.curso?.message}>

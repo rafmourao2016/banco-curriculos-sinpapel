@@ -118,7 +118,7 @@ export const cadastroSchema = z.object({
   turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),
   inicioImediato: z.boolean(),
   disponibilidadeMudanca: z.boolean(),
-  formacoes: z.array(formacaoSchema).min(1, 'Informe ao menos uma formacao').max(10, 'Informe no maximo 10 formacoes'),
+  formacoes: z.array(formacaoSchema).max(10, 'Informe no maximo 10 formacoes'),
   idiomas: z.string().optional(),
   pcd: z.boolean(),
   pcdObservacao: z.string().max(200, 'Use no maximo 200 caracteres').optional(),
