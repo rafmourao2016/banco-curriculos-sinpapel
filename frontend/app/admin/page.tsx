@@ -121,6 +121,12 @@ function rotulo(valor?: string | null) {
   return rotulos[valor] ?? valor;
 }
 
+function statusEmpresa(status: string) {
+  if (status === 'aprovada') return 'Aprovada';
+  if (status === 'reprovada') return 'Reprovada';
+  return 'Pendente';
+}
+
 function formatarData(valor: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(valor));
 }
@@ -230,6 +236,7 @@ export default function AdminPage() {
   async function atualizarEmpresa(id: string, statusAprovacao: string) {
     setErro(null);
     setMensagem(null);
+    setCarregando(true);
     try {
       const res = await fetch(`${API_URL}/admin/empresas/${id}/status`, {
         method: 'PATCH',
@@ -238,9 +245,11 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error('Não foi possível atualizar a empresa.');
       await carregarEmpresas();
-      setMensagem('Empresa atualizada.');
+      setMensagem(statusAprovacao === 'aprovada' ? 'Empresa aprovada com sucesso.' : 'Empresa reprovada com sucesso.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
     }
   }
 
@@ -628,17 +637,22 @@ export default function AdminPage() {
             </div>
             <div className="mt-4 grid gap-2">
               {empresas.map((empresa) => (
-                <div key={empresa.id} className="rounded-lg border border-slate-200 p-3 text-sm">
+                <div key={empresa.id} className={`rounded-lg border p-3 text-sm ${empresa.statusAprovacao === 'aprovada' ? 'border-emerald-200 bg-emerald-50/40' : empresa.statusAprovacao === 'reprovada' ? 'border-red-200 bg-red-50/40' : 'border-slate-200 bg-white'}`}>
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
                       <p className="font-semibold">{empresa.razaoSocial}</p>
-                      <p className="text-slate-600">{empresa.email} - {empresa.statusAprovacao}</p>
+                      <p className="text-slate-600">{empresa.email}</p>
                     </div>
-                    {empresa.cadastroMaisDe30Dias && (
-                      <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
-                        Cadastro com mais de 30 dias
+                    <div className="flex flex-wrap gap-2">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${empresa.statusAprovacao === 'aprovada' ? 'bg-emerald-100 text-emerald-800' : empresa.statusAprovacao === 'reprovada' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-800'}`}>
+                        {statusEmpresa(empresa.statusAprovacao)}
                       </span>
-                    )}
+                      {empresa.cadastroMaisDe30Dias && (
+                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                          Cadastro com mais de 30 dias
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="mt-2 grid gap-1 text-xs text-slate-500">
                     <p>Cadastro: {empresa.diasDesdeCadastro ?? 0} dias{empresa.dataCadastro ? ` (${formatarData(empresa.dataCadastro)})` : ''}</p>
@@ -664,8 +678,20 @@ export default function AdminPage() {
                     </button>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
-                    <button onClick={() => atualizarEmpresa(empresa.id, 'aprovada')} className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white">Aprovar</button>
-                    <button onClick={() => atualizarEmpresa(empresa.id, 'reprovada')} className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred">Reprovar</button>
+                    <button
+                      onClick={() => atualizarEmpresa(empresa.id, 'aprovada')}
+                      disabled={carregando || empresa.statusAprovacao === 'aprovada'}
+                      className="rounded-lg bg-singreen px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {empresa.statusAprovacao === 'aprovada' ? 'Aprovada' : 'Aprovar'}
+                    </button>
+                    <button
+                      onClick={() => atualizarEmpresa(empresa.id, 'reprovada')}
+                      disabled={carregando || empresa.statusAprovacao === 'reprovada'}
+                      className="rounded-lg border border-sinred px-3 py-2 text-xs font-semibold text-sinred disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {empresa.statusAprovacao === 'reprovada' ? 'Reprovada' : 'Reprovar'}
+                    </button>
                   </div>
                 </div>
               ))}
