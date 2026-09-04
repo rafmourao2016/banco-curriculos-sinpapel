@@ -783,7 +783,7 @@ export default function AdminPage() {
 
           {consultado && candidatos.length === 0 && !erro && (
             <div className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
-              Nenhum curriculo encontrado.
+              Nenhum currículo encontrado.
             </div>
           )}
         </section>

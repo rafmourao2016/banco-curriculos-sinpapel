@@ -129,13 +129,13 @@ export default function CadastroPage() {
       <main className="mx-auto flex min-h-screen max-w-xl flex-col items-center justify-center px-6 text-center">
         <div className="rounded-3xl border border-emerald-100 bg-white p-8 shadow-xl shadow-slate-200/70">
           <p className="text-sm font-semibold uppercase tracking-wide text-emerald-700">Cadastro recebido</p>
-          <h1 className="mt-3 text-3xl font-semibold text-slate-950">Seu curriculo ja esta no banco do SINPAPEL.</h1>
+          <h1 className="mt-3 text-3xl font-semibold text-slate-950">Seu currículo já está no banco do SINPAPEL.</h1>
           <p className="mt-4 text-slate-600">
-            Empresas associadas poderao encontrar seu perfil conforme as vagas e necessidades cadastradas.
+            Empresas associadas poderão encontrar seu perfil conforme as vagas e necessidades cadastradas.
           </p>
           <div className="mt-6 grid gap-3 sm:grid-cols-2">
             <Link href="/" className="inline-flex justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 font-semibold text-slate-800">
-              Voltar ao inicio
+              Voltar ao início
             </Link>
             <Link href="/cadastro" className="inline-flex justify-center rounded-xl bg-brand-600 px-5 py-3 font-semibold text-white">
               Fazer outro cadastro
@@ -152,7 +152,7 @@ export default function CadastroPage() {
         <div className="logo-spotlight mx-auto mb-6">
           <img
             src="/logo-sinpapel.png"
-            alt="SINPAPEL - Sindicato das Industrias de Celulose, Papel e Papelao no Estado de Minas Gerais"
+              alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
             className="relative z-10 h-auto w-64 max-w-full sm:w-80"
           />
         </div>
@@ -161,17 +161,17 @@ export default function CadastroPage() {
             href="/"
             className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-brand-600 hover:text-brand-700"
           >
-            Voltar ao inicio
+            Voltar ao início
           </Link>
           <Link href="/" className="hidden text-sm font-semibold text-brand-700 sm:inline">
-            Banco de Curriculos do SINPAPEL
+            Banco de Currículos do SINPAPEL
           </Link>
           <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
             <Link
               href="/candidato"
               className="inline-flex justify-center rounded-lg border border-brand-600 bg-white px-3 py-2 text-center text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50"
             >
-              Ja tenho cadastro
+              Já tenho cadastro
             </Link>
             <Link
               href="/admin"
@@ -185,10 +185,10 @@ export default function CadastroPage() {
         <header className="mt-8 rounded-3xl bg-brand-700 p-5 text-white shadow-2xl shadow-slate-300/60 sm:p-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-brand-100">Cadastro gratuito</p>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight sm:text-4xl">
-            Cadastre seu curriculo para ser encontrado por empresas associadas.
+            Cadastre seu currículo para ser encontrado por empresas associadas.
           </h1>
           <p className="mt-4 max-w-2xl text-slate-300">
-            Preencha seus dados profissionais em poucos minutos. Nao e necessario anexar arquivos.
+            Preencha seus dados profissionais em poucos minutos. Não é necessário anexar arquivos.
           </p>
         </header>
 
@@ -304,7 +304,7 @@ export default function CadastroPage() {
               </select>
             </Campo>
 
-            <Campo id="anosExperienciaTotal" label="Experiencia total" erro={errors.anosExperienciaTotal?.message}>
+            <Campo id="anosExperienciaTotal" label="Experiência total" erro={errors.anosExperienciaTotal?.message}>
               <select id="anosExperienciaTotal" className={inputClasses} {...register('anosExperienciaTotal')}>
                 {anosExperienciaOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -314,16 +314,16 @@ export default function CadastroPage() {
               </select>
             </Campo>
 
-            <Campo id="experienciaSetorPapel" label="Ja trabalhou no setor papel/embalagem?" erro={errors.experienciaSetorPapel?.message}>
+            <Campo id="experienciaSetorPapel" label="Já trabalhou no setor papel/embalagem?" erro={errors.experienciaSetorPapel?.message}>
               <div className="flex min-h-[50px] items-center gap-3 rounded-xl border border-slate-300 px-4">
                 <input id="experienciaSetorPapel" type="checkbox" className="h-5 w-5" {...register('experienciaSetorPapel')} />
                 <label htmlFor="experienciaSetorPapel" className="text-sm text-slate-700">
-                  Sim, ja trabalhei no setor
+                  Sim, já trabalhei no setor
                 </label>
               </div>
             </Campo>
 
-            <Campo id="inicioImediato" label="Inicio imediato?" erro={errors.inicioImediato?.message}>
+            <Campo id="inicioImediato" label="Início imediato?" erro={errors.inicioImediato?.message}>
               <div className="flex min-h-[50px] items-center gap-3 rounded-xl border border-slate-300 px-4">
                 <input id="inicioImediato" type="checkbox" className="h-5 w-5" {...register('inicioImediato')} />
                 <label htmlFor="inicioImediato" className="text-sm text-slate-700">
@@ -334,7 +334,7 @@ export default function CadastroPage() {
           </section>
 
           <section className="grid gap-5 border-t border-slate-200 pt-5">
-            <Campo id="turnos" label="Turnos disponiveis" erro={errors.turnos?.message}>
+            <Campo id="turnos" label="Turnos disponíveis" erro={errors.turnos?.message}>
               <div className="grid gap-3 rounded-xl border border-slate-300 p-4 sm:grid-cols-2">
                 {turnoOptions.map((turno) => (
                   <label key={turno.value} className="flex items-center gap-3 text-sm text-slate-700">
@@ -561,7 +561,7 @@ export default function CadastroPage() {
             disabled={isSubmitting}
             className="rounded-xl bg-brand-600 px-5 py-4 text-base font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
           >
-            {isSubmitting ? 'Enviando...' : 'Cadastrar meu curriculo'}
+            {isSubmitting ? 'Enviando...' : 'Cadastrar meu currículo'}
           </button>
         </form>
       </div>

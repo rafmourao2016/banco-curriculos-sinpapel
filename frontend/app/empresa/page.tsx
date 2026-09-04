@@ -290,13 +290,13 @@ export default function EmpresaPage() {
   async function atualizarStatus(candidatoId: string, status: string) {
     setErro(null);
     setMensagem(null);
-    const comentario = window.prompt('Comentario opcional para o SINPAPEL:')?.trim() ?? '';
+    const comentario = window.prompt('Comentário opcional para o SINPAPEL:')?.trim() ?? '';
     let dataAdmissao = '';
     if (status === 'CONTRATADO') {
       const hoje = new Date().toISOString().slice(0, 10);
-      dataAdmissao = window.prompt('Informe a data de admissao (AAAA-MM-DD):', hoje)?.trim() ?? '';
+      dataAdmissao = window.prompt('Informe a data de admissão (AAAA-MM-DD):', hoje)?.trim() ?? '';
       if (!dataAdmissao) {
-        setErro('Informe a data de admissao para marcar como contratado.');
+        setErro('Informe a data de admissão para marcar como contratado.');
         return;
       }
     }
@@ -315,7 +315,7 @@ export default function EmpresaPage() {
       setCandidatos((atuais) => status === 'CONTRATADO'
         ? atuais.filter((candidato) => candidato.id !== candidatoId)
         : atuais.map((candidato) => candidato.id === candidatoId ? { ...candidato, statusEmpresa: status, comentarioEmpresa: comentario || null } : candidato));
-      setMensagem(status === 'CONTRATADO' ? 'Contratacao registrada. O curriculo saiu da base ativa.' : 'Status atualizado.');
+      setMensagem(status === 'CONTRATADO' ? 'Contratação registrada. O currículo saiu da base ativa.' : 'Status atualizado.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -390,7 +390,7 @@ export default function EmpresaPage() {
         <header className="mt-6 rounded-2xl bg-white p-5 shadow-xl shadow-slate-200/70 sm:p-6">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-singreen">Painel da empresa</p>
           <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">Encontre candidatos ativos no banco do SINPAPEL.</h1>
-          <p className="mt-2 text-slate-600">Entre, filtre os curriculos e baixe o PDF profissional do candidato.</p>
+          <p className="mt-2 text-slate-600">Entre, filtre os currículos e baixe o PDF profissional do candidato.</p>
         </header>
 
         {!token ? (
@@ -593,7 +593,7 @@ export default function EmpresaPage() {
                 {escolaridadeOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               <select name="experiencia" className={inputClasses} defaultValue="">
-                <option value="">Experiencia</option>
+                <option value="">Experiência</option>
                 {anosExperienciaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               <select name="cnh" className={inputClasses} defaultValue="">
@@ -605,17 +605,17 @@ export default function EmpresaPage() {
                 {turnoOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               <select name="inicioImediato" className={inputClasses} defaultValue="">
-                <option value="">Inicio</option>
-                <option value="sim">Inicio imediato</option>
+                <option value="">Início</option>
+                <option value="sim">Início imediato</option>
               </select>
               <select name="pretensaoSalarial" className={inputClasses} defaultValue="">
-                <option value="">Pretensao salarial</option>
+                <option value="">Pretensão salarial</option>
                 {pretensaoSalarialOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
-              <input name="cursos" className={inputClasses} placeholder="Cursos/certificacoes separados por virgula" />
+              <input name="cursos" className={inputClasses} placeholder="Cursos/certificações separados por vírgula" />
               <label className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 sm:col-span-2 lg:col-span-6">
                 <input name="semantica" type="checkbox" value="1" className="h-5 w-5" />
-                Usar busca semantica
+                Usar busca semântica
               </label>
               <button disabled={carregando} className="rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2 lg:col-span-6">
                 {carregando ? 'Buscando...' : 'Buscar candidatos'}
