@@ -377,33 +377,24 @@ export default function EmpresaPage() {
   }
 
   return (
-    <main className="min-h-screen bg-paper px-4 py-6 text-slate-950 sm:py-8">
+    <main className="min-h-screen bg-paper px-4 py-5 text-slate-950 sm:py-8">
       <div className="mx-auto max-w-6xl">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <Link href="/" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm">
-            Voltar ao inicio
-          </Link>
-          <Link href="/cadastro" className="inline-flex min-h-11 items-center justify-center rounded-lg border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm">
-            Cadastrar curriculo
-          </Link>
-        </div>
-
-        <div className="logo-spotlight mt-8">
+        <div className="logo-spotlight">
           <img
             src="/logo-sinpapel.png"
             alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
-            className="relative z-10 h-auto w-64 max-w-full sm:w-80"
+            className="relative z-10 h-auto w-44 max-w-full sm:w-60"
           />
         </div>
 
-        <header className="mt-8 rounded-2xl bg-white p-5 shadow-xl shadow-slate-200/70 sm:p-6">
+        <header className="mt-6 rounded-2xl bg-white p-5 shadow-xl shadow-slate-200/70 sm:p-6">
           <p className="text-sm font-bold uppercase tracking-[0.2em] text-singreen">Painel da empresa</p>
           <h1 className="mt-3 text-2xl font-semibold sm:text-3xl">Encontre candidatos ativos no banco do SINPAPEL.</h1>
           <p className="mt-2 text-slate-600">Entre, filtre os curriculos e baixe o PDF profissional do candidato.</p>
         </header>
 
         {!token ? (
-          <section className="mt-6 grid gap-4 lg:grid-cols-[360px_1fr]">
+          <section className="mt-6 grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
             <div className="rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70">
               <div className="grid grid-cols-2 gap-2">
                 <button onClick={() => setModo('entrar')} className={`rounded-lg px-4 py-3 text-sm font-semibold ${modo === 'entrar' ? 'bg-brand-600 text-white' : 'border border-slate-300 text-slate-700'}`}>
@@ -483,8 +474,33 @@ export default function EmpresaPage() {
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-700 shadow-xl shadow-slate-200/70">
               <h2 className="text-xl font-semibold text-slate-950">Como funciona</h2>
-              <p className="mt-3 leading-7">Use filtros simples como cidade, area, escolaridade, experiencia e CNH. Apenas curriculos ativos aparecem para a empresa.</p>
-              <p className="mt-3 leading-7">O PDF e gerado a partir dos dados estruturados do candidato, sem depender de arquivo anexado.</p>
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <article className="rounded-xl border border-slate-200 bg-white p-5">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-600/10 text-brand-700">
+                    <span className="text-sm font-black leading-none">BUSCA</span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-slate-950">Filtragem estrategica</h3>
+                  <p className="mt-2 text-sm leading-6">
+                    Acesse instantaneamente candidatos ideais atraves de filtros avancados: cidade, area profissional, escolaridade, experiencia e certificacoes.
+                  </p>
+                  <p className="mt-2 text-sm leading-6">
+                    Visualize apenas perfis de candidatos ativos, otimizando seu processo de selecao.
+                  </p>
+                </article>
+
+                <article className="rounded-xl border border-slate-200 bg-white p-5">
+                  <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-600/10 text-brand-700">
+                    <span className="text-2xl font-black leading-none">PDF</span>
+                  </div>
+                  <h3 className="mt-4 text-lg font-semibold text-slate-950">Perfis padronizados</h3>
+                  <p className="mt-2 text-sm leading-6">
+                    Visualize perfis consistentes e profissionais, gerados automaticamente a partir de dados estruturados e verificados dos candidatos.
+                  </p>
+                  <p className="mt-2 text-sm leading-6">
+                    Baixe PDFs prontos e completos, sem depender de anexos enviados pelos candidatos.
+                  </p>
+                </article>
+              </div>
             </div>
           </section>
         ) : (
