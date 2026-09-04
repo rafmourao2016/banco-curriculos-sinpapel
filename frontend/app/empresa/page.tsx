@@ -8,6 +8,27 @@ import { apenasDigitos, cnpjValido } from '../../lib/documentos';
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const inputClasses = 'w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10';
 
+const rotulos: Record<string, string> = {
+  producao: 'Produção',
+  manutencao: 'Manutenção',
+  administrativo: 'Administrativo',
+  logistica: 'Logística',
+  qualidade: 'Qualidade',
+  comercial: 'Comercial',
+  ti: 'TI',
+  engenharia: 'Engenharia',
+  outra: 'Outra',
+  CONTATADO: 'Contatado',
+  EM_PROCESSO_SELETIVO: 'Em processo seletivo',
+  CONTRATADO: 'Contratado',
+  NAO_COMPATIVEL: 'Não compatível',
+};
+
+function rotulo(valor?: string | null) {
+  if (!valor) return 'Não informado';
+  return rotulos[valor] ?? valor;
+}
+
 type CandidatoEmpresa = {
   id: string;
   nome: string;
@@ -93,7 +114,7 @@ export default function EmpresaPage() {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        throw new Error(body.message ?? 'Nao foi possivel cadastrar a empresa.');
+        throw new Error(body.message ?? 'Não foi possível cadastrar a empresa.');
       }
       setEmail(String(form.get('email') ?? ''));
       setSenha(String(form.get('senha') ?? ''));
@@ -112,7 +133,7 @@ export default function EmpresaPage() {
     setErroRecuperacao(null);
     setMensagemRecuperacao(null);
     if (!email.trim() || !email.includes('@')) {
-      setErroRecuperacao('Informe um e-mail valido para receber o link.');
+      setErroRecuperacao('Informe um e-mail válido para receber o link.');
       return;
     }
     setCarregando(true);
@@ -123,8 +144,8 @@ export default function EmpresaPage() {
         body: JSON.stringify({ email, tipo: 'empresa' }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message ?? 'Nao foi possivel solicitar a recuperacao.');
-      setMensagemRecuperacao(`${data.mensagem ?? 'Confira seu e-mail para redefinir a senha.'} Verifique tambem a pasta de spam, lixo eletronico ou promocoes.`);
+      if (!res.ok) throw new Error(data.message ?? 'Não foi possível solicitar a recuperação.');
+      setMensagemRecuperacao(`${data.mensagem ?? 'Confira seu e-mail para redefinir a senha.'} Verifique também a pasta de spam, lixo eletrônico ou promoções.`);
     } catch (e) {
       setErroRecuperacao(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -141,11 +162,11 @@ export default function EmpresaPage() {
       return;
     }
     if (!email.includes('@')) {
-      setErro('Informe um e-mail valido.');
+      setErro('Informe um e-mail válido.');
       return;
     }
     if (senha.length < 8) {
-      setErro('A senha deve ter no minimo 8 caracteres.');
+      setErro('A senha deve ter no mínimo 8 caracteres.');
       return;
     }
     setCarregando(true);
@@ -158,11 +179,11 @@ export default function EmpresaPage() {
       const data = await res.json();
       if (!res.ok) {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
-        throw new Error(detalhe ?? 'E-mail ou senha invalidos.');
+        throw new Error(detalhe ?? 'E-mail ou senha inválidos.');
       }
       if (data.requer2fa) {
         setExige2fa(true);
-        setMensagem(data.mensagem ?? 'Digite o codigo do aplicativo autenticador.');
+        setMensagem(data.mensagem ?? 'Digite o código do aplicativo autenticador.');
         return;
       }
       setToken(data.accessToken);
@@ -196,10 +217,10 @@ export default function EmpresaPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message ?? 'Nao foi possivel iniciar o 2FA.');
+      if (!res.ok) throw new Error(data.message ?? 'Não foi possível iniciar o 2FA.');
       setTwoFaQr(data.qrCodeDataUrl ?? '');
       setTwoFaSecret(data.secret ?? '');
-      setMensagem('Escaneie o QR Code no aplicativo autenticador e informe o codigo gerado.');
+      setMensagem('Escaneie o QR Code no aplicativo autenticador e informe o código gerado.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -218,12 +239,12 @@ export default function EmpresaPage() {
         body: JSON.stringify({ codigo: twoFaCodigo }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message ?? 'Codigo 2FA invalido.');
+      if (!res.ok) throw new Error(data.message ?? 'Código 2FA inválido.');
       setTwoFaAtivo(true);
       setTwoFaQr('');
       setTwoFaSecret('');
       setTwoFaCodigo('');
-      setMensagem('2FA ativado. A empresa pedira um codigo a cada novo login.');
+      setMensagem('2FA ativado. A empresa pedirá um código a cada novo login.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -242,7 +263,7 @@ export default function EmpresaPage() {
         body: JSON.stringify({ codigo: twoFaCodigo }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message ?? 'Codigo 2FA invalido.');
+      if (!res.ok) throw new Error(data.message ?? 'Código 2FA inválido.');
       setTwoFaAtivo(false);
       setTwoFaCodigo('');
       setMensagem('2FA desativado.');
@@ -276,10 +297,10 @@ export default function EmpresaPage() {
           requisitos: String(form.get('requisitos') ?? ''),
         }),
       });
-      if (!res.ok) throw new Error('Nao foi possivel cadastrar a necessidade.');
+      if (!res.ok) throw new Error('Não foi possível cadastrar a necessidade.');
       event.currentTarget.reset();
       await carregarVagas();
-      setMensagem('Necessidade cadastrada. Alertas reversos foram registrados para candidatos compativeis.');
+      setMensagem('Necessidade cadastrada. Alertas reversos foram registrados para candidatos compatíveis.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -310,7 +331,7 @@ export default function EmpresaPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
-        throw new Error(detalhe ?? 'Nao foi possivel atualizar o status.');
+        throw new Error(detalhe ?? 'Não foi possível atualizar o status.');
       }
       setCandidatos((atuais) => status === 'CONTRATADO'
         ? atuais.filter((candidato) => candidato.id !== candidatoId)
@@ -342,7 +363,7 @@ export default function EmpresaPage() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
-        throw new Error(detalhe ?? 'Nao foi possivel consultar candidatos.');
+        throw new Error(detalhe ?? 'Não foi possível consultar candidatos.');
       }
       setCandidatos(data);
     } catch (e) {
@@ -360,7 +381,7 @@ export default function EmpresaPage() {
       const res = await fetch(`${API_URL}/empresas/candidatos/${candidatoId}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Nao foi possivel baixar o PDF.');
+      if (!res.ok) throw new Error('Não foi possível baixar o PDF.');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -410,10 +431,10 @@ export default function EmpresaPage() {
                   <input className={inputClasses} type="email" autoComplete="email" placeholder="E-mail da empresa" value={email} onChange={(e) => setEmail(e.target.value)} />
                   <input className={inputClasses} type="password" autoComplete="current-password" minLength={8} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
                   {exige2fa && (
-                    <input className={inputClasses} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Codigo de 6 digitos do autenticador" value={codigo2fa} onChange={(e) => setCodigo2fa(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                    <input className={inputClasses} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Código de 6 dígitos do autenticador" value={codigo2fa} onChange={(e) => setCodigo2fa(e.target.value.replace(/\D/g, '').slice(0, 6))} />
                   )}
                   <button disabled={carregando} className="rounded-lg bg-brand-600 px-5 py-3 font-semibold text-white disabled:opacity-60">
-                    {carregando ? 'Entrando...' : exige2fa ? 'Confirmar codigo e entrar' : 'Entrar'}
+                    {carregando ? 'Entrando...' : exige2fa ? 'Confirmar código e entrar' : 'Entrar'}
                   </button>
                   <button type="button" onClick={() => setMostrarRecuperacao((atual) => !atual)} className="text-sm font-semibold text-brand-700 underline underline-offset-4">
                     Esqueci minha senha
@@ -422,7 +443,7 @@ export default function EmpresaPage() {
                     <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">
                       <p>Informe o e-mail da empresa e enviaremos um link para criar uma nova senha.</p>
                       <button type="button" onClick={solicitarRecuperacao} disabled={carregando} className="rounded-lg border border-brand-600 px-4 py-3 font-semibold text-brand-700 disabled:opacity-60">
-                        {carregando ? 'Enviando...' : 'Enviar link de recuperacao'}
+                        {carregando ? 'Enviando...' : 'Enviar link de recuperação'}
                       </button>
                       {mensagemRecuperacao && (
                         <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
@@ -439,7 +460,7 @@ export default function EmpresaPage() {
                 </form>
               ) : (
                 <form onSubmit={cadastrarEmpresa} className="mt-4 grid gap-3">
-                  <input name="razaoSocial" required minLength={2} className={inputClasses} placeholder="Razao social" />
+                      <input name="razaoSocial" required minLength={2} className={inputClasses} placeholder="Razão social" />
                   <div className="grid gap-1">
                     <input
                       name="cnpj"
@@ -479,12 +500,12 @@ export default function EmpresaPage() {
                   <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-brand-600/10 text-brand-700">
                     <span className="text-sm font-black leading-none">BUSCA</span>
                   </div>
-                  <h3 className="mt-4 text-lg font-semibold text-slate-950">Filtragem estrategica</h3>
+                  <h3 className="mt-4 text-lg font-semibold text-slate-950">Filtragem estratégica</h3>
                   <p className="mt-2 text-sm leading-6">
-                    Acesse instantaneamente candidatos ideais atraves de filtros avancados: cidade, area profissional, escolaridade, experiencia e certificacoes.
+                    Acesse instantaneamente candidatos ideais através de filtros avançados: cidade, área profissional, escolaridade, experiência e certificações.
                   </p>
                   <p className="mt-2 text-sm leading-6">
-                    Visualize apenas perfis de candidatos ativos, otimizando seu processo de selecao.
+                    Visualize apenas perfis de candidatos ativos, otimizando seu processo de seleção.
                   </p>
                 </article>
 
@@ -520,10 +541,10 @@ export default function EmpresaPage() {
             <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/70">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <p className="text-sm font-bold uppercase tracking-[0.16em] text-singreen">Seguranca da conta</p>
-                  <h3 className="mt-2 text-xl font-semibold">Autenticacao em duas etapas</h3>
+                  <p className="text-sm font-bold uppercase tracking-[0.16em] text-singreen">Segurança da conta</p>
+                  <h3 className="mt-2 text-xl font-semibold">Autenticação em duas etapas</h3>
                   <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">
-                    {twoFaAtivo ? 'Ativa: alem da senha, sera solicitado um codigo do aplicativo autenticador.' : 'Proteja o acesso da empresa com um codigo temporario do aplicativo autenticador.'}
+                    {twoFaAtivo ? 'Ativa: além da senha, será solicitado um código do aplicativo autenticador.' : 'Proteja o acesso da empresa com um código temporário do aplicativo autenticador.'}
                   </p>
                 </div>
                 {!twoFaAtivo && !twoFaQr && (
@@ -535,11 +556,11 @@ export default function EmpresaPage() {
 
               {!twoFaAtivo && twoFaQr && (
                 <div className="mt-5 grid gap-4 border-t border-slate-200 pt-5 sm:grid-cols-[220px_1fr] sm:items-center">
-                  <img src={twoFaQr} alt="QR Code para ativar a autenticacao em duas etapas" className="h-[220px] w-[220px] rounded-lg border border-slate-200 p-2" />
+                  <img src={twoFaQr} alt="QR Code para ativar a autenticação em duas etapas" className="h-[220px] w-[220px] rounded-lg border border-slate-200 p-2" />
                   <div className="grid gap-3">
-                    <p className="text-sm text-slate-700">Abra Google Authenticator, Microsoft Authenticator ou outro aplicativo compativel e escaneie o QR Code.</p>
+                    <p className="text-sm text-slate-700">Abra Google Authenticator, Microsoft Authenticator ou outro aplicativo compatível e escaneie o QR Code.</p>
                     <p className="break-all rounded-lg bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600">Chave manual: {twoFaSecret}</p>
-                    <input className={inputClasses} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Digite o codigo de 6 digitos" value={twoFaCodigo} onChange={(e) => setTwoFaCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                    <input className={inputClasses} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Digite o código de 6 dígitos" value={twoFaCodigo} onChange={(e) => setTwoFaCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))} />
                     <button type="button" onClick={confirmar2fa} disabled={carregando || twoFaCodigo.length !== 6} className="rounded-lg bg-singreen px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                       Confirmar e ativar 2FA
                     </button>
@@ -549,7 +570,7 @@ export default function EmpresaPage() {
 
               {twoFaAtivo && (
                 <div className="mt-5 flex flex-col gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:items-center">
-                  <input className={`${inputClasses} sm:max-w-xs`} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Codigo atual para desativar" value={twoFaCodigo} onChange={(e) => setTwoFaCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                  <input className={`${inputClasses} sm:max-w-xs`} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Código atual para desativar" value={twoFaCodigo} onChange={(e) => setTwoFaCodigo(e.target.value.replace(/\D/g, '').slice(0, 6))} />
                   <button type="button" onClick={desativar2fa} disabled={carregando || twoFaCodigo.length !== 6} className="rounded-lg border border-red-300 px-4 py-3 text-sm font-semibold text-red-700 disabled:opacity-60">
                     Desativar 2FA
                   </button>
@@ -572,7 +593,7 @@ export default function EmpresaPage() {
                 <h3 className="text-lg font-semibold">Necessidades cadastradas</h3>
                 {vagas.map((vaga) => (
                   <div key={vaga.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-                    <p className="font-semibold">{vaga.area}</p>
+                    <p className="font-semibold">{rotulo(vaga.area)}</p>
                     <p className="mt-1 text-slate-600">{vaga.requisitos}</p>
                   </div>
                 ))}
@@ -583,9 +604,9 @@ export default function EmpresaPage() {
             <form onSubmit={buscar} className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:grid-cols-2 lg:grid-cols-6">
               <input name="q" className={inputClasses} placeholder="Nome, cargo ou habilidade" />
               <input name="regiao" className={inputClasses} placeholder="Cidade" />
-              <input name="cidades" className={inputClasses} placeholder="Microrregiao: cidades separadas por virgula" />
+              <input name="cidades" className={inputClasses} placeholder="Microrregião: cidades separadas por vírgula" />
               <select name="area" className={inputClasses} defaultValue="">
-                <option value="">Todas as areas</option>
+                <option value="">Todas as áreas</option>
                 {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
               <select name="escolaridade" className={inputClasses} defaultValue="">
@@ -628,7 +649,7 @@ export default function EmpresaPage() {
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <h3 className="text-xl font-semibold">{candidato.nome}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{candidato.cargoPretendido ?? candidato.experiencias[0]?.cargo ?? 'Cargo nao informado'} - {candidato.regiao}{candidato.uf ? `/${candidato.uf}` : ''}</p>
+                      <p className="mt-1 text-sm text-slate-600">{candidato.cargoPretendido ?? candidato.experiencias[0]?.cargo ?? 'Cargo não informado'} - {candidato.regiao}{candidato.uf ? `/${candidato.uf}` : ''}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {candidato.habilidades.map((habilidade) => <span key={habilidade} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{habilidade}</span>)}
                       </div>
@@ -650,15 +671,15 @@ export default function EmpresaPage() {
                           {candidato.complementoEndereco ? ` - ${candidato.complementoEndereco}` : ''}
                         </p>
                       )}
-                      <p><strong>CNH:</strong> {candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Nao'}</p>
-                      <p><strong>Status:</strong> {candidato.statusEmpresa?.replaceAll('_', ' ') ?? 'Sem status'}</p>
-                      {candidato.comentarioEmpresa && <p><strong>Comentario:</strong> {candidato.comentarioEmpresa}</p>}
+                      <p><strong>CNH:</strong> {candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Não'}</p>
+                      <p><strong>Status:</strong> {candidato.statusEmpresa ? rotulo(candidato.statusEmpresa) : 'Sem status'}</p>
+                      {candidato.comentarioEmpresa && <p><strong>Comentário:</strong> {candidato.comentarioEmpresa}</p>}
                       <div className="grid grid-cols-2 gap-2">
                         {[
                           ['CONTATADO', 'Contatado'],
                           ['EM_PROCESSO_SELETIVO', 'Em processo'],
                           ['CONTRATADO', 'Contratado'],
-                          ['NAO_COMPATIVEL', 'Nao compativel'],
+                          ['NAO_COMPATIVEL', 'Não compatível'],
                         ].map(([valor, label]) => (
                           <button key={valor} type="button" onClick={() => atualizarStatus(candidato.id, valor)} className={`rounded-lg border px-3 py-2 text-xs font-semibold ${candidato.statusEmpresa === valor ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-300 text-slate-700'}`}>
                             {label}

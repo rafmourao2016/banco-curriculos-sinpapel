@@ -152,7 +152,7 @@ export default function CadastroPage() {
         <div className="logo-spotlight mx-auto mb-6">
           <img
             src="/logo-sinpapel.png"
-              alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
+            alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
             className="relative z-10 h-auto w-64 max-w-full sm:w-80"
           />
         </div>
@@ -245,7 +245,7 @@ export default function CadastroPage() {
               <input id="complementoEndereco" autoComplete="address-line3" className={inputClasses} placeholder="Apto, bloco, referência..." {...register('complementoEndereco')} />
             </Campo>
 
-            <Campo id="regiao" label="Cidade / regiao" erro={errors.regiao?.message}>
+            <Campo id="regiao" label="Cidade / região" erro={errors.regiao?.message}>
               <input id="regiao" autoComplete="address-level2" className={inputClasses} {...register('regiao')} />
             </Campo>
 
@@ -269,7 +269,7 @@ export default function CadastroPage() {
               <div className="flex min-h-[50px] items-center gap-3 rounded-xl border border-slate-300 px-4">
                 <input id="possuiCnh" type="checkbox" className="h-5 w-5" {...register('possuiCnh')} />
                 <label htmlFor="possuiCnh" className="text-sm text-slate-700">
-                  Sim, possuo Carteira Nacional de Habilitacao
+                  Sim, possuo Carteira Nacional de Habilitação
                 </label>
               </div>
             </Campo>
@@ -280,7 +280,7 @@ export default function CadastroPage() {
           </section>
 
           <section className="grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2">
-            <Campo id="areaPretendida" label="Area pretendida" erro={errors.areaPretendida?.message}>
+            <Campo id="areaPretendida" label="Área pretendida" erro={errors.areaPretendida?.message}>
               <select id="areaPretendida" className={inputClasses} {...register('areaPretendida')}>
                 {areaPretendidaOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -291,10 +291,10 @@ export default function CadastroPage() {
             </Campo>
 
             <Campo id="cargoPretendido" label="Cargo pretendido" erro={errors.cargoPretendido?.message}>
-              <input id="cargoPretendido" className={inputClasses} placeholder="Ex.: Auxiliar de producao" {...register('cargoPretendido')} />
+              <input id="cargoPretendido" className={inputClasses} placeholder="Ex.: Auxiliar de produção" {...register('cargoPretendido')} />
             </Campo>
 
-            <Campo id="pretensaoSalarial" label="Pretensao salarial" erro={errors.pretensaoSalarial?.message}>
+            <Campo id="pretensaoSalarial" label="Pretensão salarial" erro={errors.pretensaoSalarial?.message}>
               <select id="pretensaoSalarial" className={inputClasses} {...register('pretensaoSalarial')}>
                 {pretensaoSalarialOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
@@ -345,11 +345,11 @@ export default function CadastroPage() {
               </div>
             </Campo>
 
-            <Campo id="disponibilidadeMudanca" label="Mudanca de cidade" erro={errors.disponibilidadeMudanca?.message}>
+            <Campo id="disponibilidadeMudanca" label="Mudança de cidade" erro={errors.disponibilidadeMudanca?.message}>
               <div className="flex min-h-[50px] items-center gap-3 rounded-xl border border-slate-300 px-4">
                 <input id="disponibilidadeMudanca" type="checkbox" className="h-5 w-5" {...register('disponibilidadeMudanca')} />
                 <label htmlFor="disponibilidadeMudanca" className="text-sm text-slate-700">
-                  Tenho disponibilidade para mudanca de cidade
+                  Tenho disponibilidade para mudança de cidade
                 </label>
               </div>
             </Campo>
@@ -358,9 +358,9 @@ export default function CadastroPage() {
           <section className="grid gap-4 border-t border-slate-200 pt-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">Formacao</h2>
+                <h2 className="text-lg font-semibold text-slate-950">Formação</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Se tiver cursos ou formacoes, adicione aqui. Voce pode incluir ate 10 registros.
+                  Se tiver cursos ou formações, adicione aqui. Você pode incluir até 10 registros.
                 </p>
               </div>
               <button
@@ -369,7 +369,7 @@ export default function CadastroPage() {
                 disabled={formacoes.length >= 10}
                 className="inline-flex min-h-11 items-center justify-center rounded-xl border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                + Adicionar formacao
+                + Adicionar formação
               </button>
             </div>
 
@@ -379,14 +379,14 @@ export default function CadastroPage() {
 
             {formacoes.length === 0 && (
               <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
-                Nenhuma formacao adicionada. Este campo e opcional.
+                Nenhuma formação adicionada. Este campo é opcional.
               </div>
             )}
 
             {formacoes.map((formacao, index) => (
               <div key={formacao.id} className="grid gap-5 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
                 <div className="flex items-center justify-between gap-3 sm:col-span-2">
-                  <h3 className="font-semibold text-brand-700">Formacao {index + 1}</h3>
+                  <h3 className="font-semibold text-brand-700">Formação {index + 1}</h3>
                   <button
                     type="button"
                     onClick={() => removerFormacao(index)}
@@ -396,11 +396,11 @@ export default function CadastroPage() {
                   </button>
                 </div>
 
-                <Campo id={`formacoes.${index}.curso`} label="Curso / formacao" erro={errors.formacoes?.[index]?.curso?.message}>
-                  <input id={`formacoes.${index}.curso`} className={inputClasses} placeholder="Ex.: Ensino medio, Tecnico em mecanica" {...register(`formacoes.${index}.curso`)} />
+                <Campo id={`formacoes.${index}.curso`} label="Curso / formação" erro={errors.formacoes?.[index]?.curso?.message}>
+                  <input id={`formacoes.${index}.curso`} className={inputClasses} placeholder="Ex.: Ensino médio, Técnico em mecânica" {...register(`formacoes.${index}.curso`)} />
                 </Campo>
 
-                <Campo id={`formacoes.${index}.nivel`} label="Nivel do curso" erro={errors.formacoes?.[index]?.nivel?.message}>
+                <Campo id={`formacoes.${index}.nivel`} label="Nível do curso" erro={errors.formacoes?.[index]?.nivel?.message}>
                   <select id={`formacoes.${index}.nivel`} className={inputClasses} {...register(`formacoes.${index}.nivel`)}>
                     {formacaoNivelOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -410,11 +410,11 @@ export default function CadastroPage() {
                   </select>
                 </Campo>
 
-                <Campo id={`formacoes.${index}.instituicao`} label="Instituicao" erro={errors.formacoes?.[index]?.instituicao?.message}>
+                <Campo id={`formacoes.${index}.instituicao`} label="Instituição" erro={errors.formacoes?.[index]?.instituicao?.message}>
                   <input id={`formacoes.${index}.instituicao`} className={inputClasses} {...register(`formacoes.${index}.instituicao`)} />
                 </Campo>
 
-                <Campo id={`formacoes.${index}.status`} label="Situacao da formacao" erro={errors.formacoes?.[index]?.status?.message}>
+                <Campo id={`formacoes.${index}.status`} label="Situação da formação" erro={errors.formacoes?.[index]?.status?.message}>
                   <select id={`formacoes.${index}.status`} className={inputClasses} {...register(`formacoes.${index}.status`)}>
                     {formacaoStatusOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
@@ -434,9 +434,9 @@ export default function CadastroPage() {
           <section className="grid gap-4 border-t border-slate-200 pt-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h2 className="text-lg font-semibold text-slate-950">Cargos e experiencias</h2>
+                <h2 className="text-lg font-semibold text-slate-950">Cargos e experiências</h2>
                 <p className="mt-1 text-sm leading-6 text-slate-600">
-                  Informe o cargo atual ou os ultimos cargos relevantes. Voce pode adicionar ate 5 registros.
+                  Informe o cargo atual ou os últimos cargos relevantes. Você pode adicionar até 5 registros.
                 </p>
               </div>
               <button
@@ -472,15 +472,15 @@ export default function CadastroPage() {
                   <input id={`experiencias.${index}.empresa`} className={inputClasses} {...register(`experiencias.${index}.empresa`)} />
                 </Campo>
 
-                <Campo id={`experiencias.${index}.cargo`} label={index === 0 ? 'Cargo atual / ultimo cargo' : 'Cargo'} erro={errors.experiencias?.[index]?.cargo?.message}>
+                <Campo id={`experiencias.${index}.cargo`} label={index === 0 ? 'Cargo atual / último cargo' : 'Cargo'} erro={errors.experiencias?.[index]?.cargo?.message}>
                   <input id={`experiencias.${index}.cargo`} className={inputClasses} placeholder="Ex.: Trainee industrial" {...register(`experiencias.${index}.cargo`)} />
                 </Campo>
 
-                <Campo id={`experiencias.${index}.area`} label="Area de atuacao" erro={errors.experiencias?.[index]?.area?.message}>
-                  <input id={`experiencias.${index}.area`} className={inputClasses} placeholder="Ex.: Producao, manutencao, administrativo" {...register(`experiencias.${index}.area`)} />
+                <Campo id={`experiencias.${index}.area`} label="Área de atuação" erro={errors.experiencias?.[index]?.area?.message}>
+                  <input id={`experiencias.${index}.area`} className={inputClasses} placeholder="Ex.: Produção, manutenção, administrativo" {...register(`experiencias.${index}.area`)} />
                 </Campo>
 
-                <Campo id={`experiencias.${index}.dataInicio`} label="Inicio no cargo" erro={errors.experiencias?.[index]?.dataInicio?.message}>
+                <Campo id={`experiencias.${index}.dataInicio`} label="Início no cargo" erro={errors.experiencias?.[index]?.dataInicio?.message}>
                   <input id={`experiencias.${index}.dataInicio`} type="date" className={inputClasses} {...register(`experiencias.${index}.dataInicio`)} />
                 </Campo>
 
@@ -488,11 +488,11 @@ export default function CadastroPage() {
                   <input id={`experiencias.${index}.dataFim`} type="date" className={inputClasses} {...register(`experiencias.${index}.dataFim`)} />
                 </Campo>
 
-                <Campo id={`experiencias.${index}.descricao`} label="Resumo da experiencia (opcional)" erro={errors.experiencias?.[index]?.descricao?.message}>
+                <Campo id={`experiencias.${index}.descricao`} label="Resumo da experiência (opcional)" erro={errors.experiencias?.[index]?.descricao?.message}>
                   <textarea
                     id={`experiencias.${index}.descricao`}
                     className={`${inputClasses} min-h-28 resize-y`}
-                    placeholder="Descreva atividades em ate 300 caracteres"
+                    placeholder="Descreva atividades em até 300 caracteres"
                     {...register(`experiencias.${index}.descricao`)}
                   />
                 </Campo>
@@ -502,7 +502,7 @@ export default function CadastroPage() {
 
           <section className="grid gap-5 border-t border-slate-200 pt-5 sm:grid-cols-2">
             <Campo id="idiomas" label="Idiomas" erro={errors.idiomas?.message}>
-              <input id="idiomas" className={inputClasses} placeholder="Ex.: ingles basico, espanhol" {...register('idiomas')} />
+              <input id="idiomas" className={inputClasses} placeholder="Ex.: inglês básico, espanhol" {...register('idiomas')} />
             </Campo>
 
             <Campo id="pcd" label="PCD? (opcional)" erro={errors.pcd?.message}>
@@ -514,7 +514,7 @@ export default function CadastroPage() {
               </div>
             </Campo>
 
-            <Campo id="pcdObservacao" label="Observacao PCD (opcional)" erro={errors.pcdObservacao?.message}>
+            <Campo id="pcdObservacao" label="Observação PCD (opcional)" erro={errors.pcdObservacao?.message}>
               <input id="pcdObservacao" className={inputClasses} {...register('pcdObservacao')} />
             </Campo>
           </section>

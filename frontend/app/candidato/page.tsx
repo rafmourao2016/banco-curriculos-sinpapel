@@ -58,7 +58,7 @@ export default function CandidatoPage() {
     setErro(null);
     setMensagem(null);
     if (!email.trim() || !email.includes('@')) {
-      setErro('Informe um e-mail valido para receber o link.');
+      setErro('Informe um e-mail válido para receber o link.');
       return;
     }
     setCarregando(true);
@@ -69,7 +69,7 @@ export default function CandidatoPage() {
         body: JSON.stringify({ email, tipo: 'candidato' }),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.message ?? 'Nao foi possivel solicitar a recuperacao.');
+      if (!res.ok) throw new Error(data.message ?? 'Não foi possível solicitar a recuperação.');
       setMensagem(`${data.mensagem ?? 'Confira seu e-mail para redefinir a senha.'} Verifique também a pasta de spam, lixo eletrônico ou promoções.`);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -87,11 +87,11 @@ export default function CandidatoPage() {
       return;
     }
     if (!email.includes('@')) {
-      setErro('Informe um e-mail valido.');
+      setErro('Informe um e-mail válido.');
       return;
     }
     if (senha.length < 8) {
-      setErro('A senha deve ter no minimo 8 caracteres.');
+      setErro('A senha deve ter no mínimo 8 caracteres.');
       return;
     }
     setCarregando(true);
@@ -183,7 +183,7 @@ export default function CandidatoPage() {
       const res = await fetch(`${API_URL}/candidatos/me/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) throw new Error('Nao foi possivel gerar o PDF.');
+      if (!res.ok) throw new Error('Não foi possível gerar o PDF.');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -260,7 +260,7 @@ export default function CandidatoPage() {
             <button type="button" onClick={() => setMostrarRecuperacao((atual) => !atual)} className="text-sm font-semibold text-brand-700 underline underline-offset-4">
               Esqueci minha senha
             </button>
-            {mostrarRecuperacao && <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700"><p>Informe o e-mail do cadastro e enviaremos um link para criar uma nova senha.</p><button type="button" onClick={solicitarRecuperacao} disabled={carregando} className="rounded-lg border border-brand-600 px-4 py-3 font-semibold text-brand-700 disabled:opacity-60">Enviar link de recuperacao</button></div>}
+            {mostrarRecuperacao && <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700"><p>Informe o e-mail do cadastro e enviaremos um link para criar uma nova senha.</p><button type="button" onClick={solicitarRecuperacao} disabled={carregando} className="rounded-lg border border-brand-600 px-4 py-3 font-semibold text-brand-700 disabled:opacity-60">Enviar link de recuperação</button></div>}
           </form>
         ) : (
           <form onSubmit={salvar} className="mt-6 grid gap-5 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:p-6">

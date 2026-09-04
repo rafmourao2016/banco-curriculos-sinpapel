@@ -4,18 +4,18 @@ import { cpfValido } from './documentos';
 export const escolaridadeOptions = [
   { value: 'FUNDAMENTAL_INCOMPLETO', label: 'Fundamental incompleto' },
   { value: 'FUNDAMENTAL_COMPLETO', label: 'Fundamental completo' },
-  { value: 'MEDIO_INCOMPLETO', label: 'Medio incompleto' },
-  { value: 'MEDIO_COMPLETO', label: 'Medio completo' },
+  { value: 'MEDIO_INCOMPLETO', label: 'Médio incompleto' },
+  { value: 'MEDIO_COMPLETO', label: 'Médio completo' },
   { value: 'SUPERIOR_INCOMPLETO', label: 'Superior incompleto' },
   { value: 'SUPERIOR_COMPLETO', label: 'Superior completo' },
-  { value: 'POS_GRADUACAO', label: 'Pos-graduacao' },
+  { value: 'POS_GRADUACAO', label: 'Pós-graduação' },
 ] as const;
 
 export const areaPretendidaOptions = [
-  { value: 'producao', label: 'Producao' },
-  { value: 'manutencao', label: 'Manutencao' },
+  { value: 'producao', label: 'Produção' },
+  { value: 'manutencao', label: 'Manutenção' },
   { value: 'administrativo', label: 'Administrativo' },
-  { value: 'logistica', label: 'Logistica' },
+  { value: 'logistica', label: 'Logística' },
   { value: 'qualidade', label: 'Qualidade' },
   { value: 'comercial', label: 'Comercial' },
   { value: 'ti', label: 'TI' },
@@ -24,7 +24,7 @@ export const areaPretendidaOptions = [
 ] as const;
 
 export const pretensaoSalarialOptions = [
-  { value: 'ate_1500', label: 'Ate R$ 1.500' },
+  { value: 'ate_1500', label: 'Até R$ 1.500' },
   { value: '1501_2500', label: 'R$ 1.501 a R$ 2.500' },
   { value: '2501_3500', label: 'R$ 2.501 a R$ 3.500' },
   { value: '3501_5000', label: 'R$ 3.501 a R$ 5.000' },
@@ -32,15 +32,15 @@ export const pretensaoSalarialOptions = [
 ] as const;
 
 export const anosExperienciaOptions = [
-  { value: 'sem_experiencia', label: 'Sem experiencia' },
-  { value: 'ate_1_ano', label: 'Ate 1 ano' },
+  { value: 'sem_experiencia', label: 'Sem experiência' },
+  { value: 'ate_1_ano', label: 'Até 1 ano' },
   { value: '1_3_anos', label: '1 a 3 anos' },
   { value: '3_5_anos', label: '3 a 5 anos' },
   { value: 'mais_5_anos', label: 'Mais de 5 anos' },
 ] as const;
 
 export const turnoOptions = [
-  { value: 'manha', label: 'Manha' },
+  { value: 'manha', label: 'Manhã' },
   { value: 'tarde', label: 'Tarde' },
   { value: 'noite', label: 'Noite' },
   { value: 'revezamento', label: 'Revezamento' },
@@ -48,56 +48,56 @@ export const turnoOptions = [
 
 export const formacaoStatusOptions = [
   { value: 'cursando', label: 'Cursando' },
-  { value: 'concluido', label: 'Concluido' },
+  { value: 'concluido', label: 'Concluído' },
   { value: 'trancado', label: 'Trancado' },
 ] as const;
 
 export const formacaoNivelOptions = [
   { value: 'fundamental', label: 'Fundamental' },
-  { value: 'medio', label: 'Medio' },
-  { value: 'tecnico', label: 'Tecnico' },
+  { value: 'medio', label: 'Médio' },
+  { value: 'tecnico', label: 'Técnico' },
   { value: 'superior', label: 'Superior' },
-  { value: 'pos_graduacao', label: 'Pos-graduacao' },
+  { value: 'pos_graduacao', label: 'Pós-graduação' },
   { value: 'profissionalizante', label: 'Profissionalizante' },
-  { value: 'certificacao', label: 'Certificacao' },
+  { value: 'certificacao', label: 'Certificação' },
   { value: 'outro', label: 'Outro' },
 ] as const;
 
 const experienciaSchema = z.object({
-  empresa: z.string().max(120, 'Use no maximo 120 caracteres').optional(),
-  cargo: z.string().min(2, 'Informe o cargo').max(120, 'Use no maximo 120 caracteres'),
-  area: z.string().min(2, 'Informe a area de atuacao').max(120, 'Use no maximo 120 caracteres'),
+  empresa: z.string().max(120, 'Use no máximo 120 caracteres').optional(),
+  cargo: z.string().min(2, 'Informe o cargo').max(120, 'Use no máximo 120 caracteres'),
+  area: z.string().min(2, 'Informe a área de atuação').max(120, 'Use no máximo 120 caracteres'),
   dataInicio: z.string().min(1, 'Informe quando iniciou neste cargo'),
   dataFim: z.string().optional(),
-  descricao: z.string().max(300, 'Use no maximo 300 caracteres').optional(),
+  descricao: z.string().max(300, 'Use no máximo 300 caracteres').optional(),
 }).refine(
   (dados) => !dados.dataFim || dados.dataFim >= dados.dataInicio,
   {
     path: ['dataFim'],
-    message: 'A data final nao pode ser anterior a data inicial',
+    message: 'A data final não pode ser anterior à data inicial',
   },
 );
 
 const formacaoSchema = z.object({
-  curso: z.string().min(2, 'Informe o curso ou formacao'),
+  curso: z.string().min(2, 'Informe o curso ou formação'),
   nivel: z.enum(['fundamental', 'medio', 'tecnico', 'superior', 'pos_graduacao', 'profissionalizante', 'certificacao', 'outro']),
-  instituicao: z.string().min(2, 'Informe a instituicao'),
+  instituicao: z.string().min(2, 'Informe a instituição'),
   status: z.enum(['cursando', 'concluido', 'trancado']),
-  ano: z.coerce.number().int().min(1950, 'Ano invalido').max(2100, 'Ano invalido'),
+  ano: z.coerce.number().int().min(1950, 'Ano inválido').max(2100, 'Ano inválido'),
 });
 
 export const cadastroSchema = z.object({
   nome: z.string().min(3, 'Informe seu nome completo'),
   cpf: z.string().min(11, 'CPF inválido').max(14).refine(cpfValido, 'CPF inválido. Confira o número informado.'),
-  email: z.string().email('E-mail invalido'),
-  telefone: z.string().min(10, 'Telefone invalido'),
+  email: z.string().email('E-mail inválido'),
+  telefone: z.string().min(10, 'Telefone inválido'),
   dataNascimento: z.string().min(1, 'Informe sua data de nascimento'),
   cep: z.string().optional().refine((valor) => !valor || valor.replace(/\D/g, '').length === 8, 'CEP inválido'),
   logradouro: z.string().max(150, 'Use no máximo 150 caracteres').optional(),
   bairro: z.string().max(100, 'Use no máximo 100 caracteres').optional(),
   numeroEndereco: z.string().max(20, 'Use no máximo 20 caracteres').optional(),
   complementoEndereco: z.string().max(100, 'Use no máximo 100 caracteres').optional(),
-  regiao: z.string().min(2, 'Informe sua cidade/regiao'),
+  regiao: z.string().min(2, 'Informe sua cidade/região'),
   uf: z.string().min(2, 'Informe a UF').max(2, 'Use a sigla da UF'),
   escolaridade: z.enum([
     'FUNDAMENTAL_INCOMPLETO',
@@ -118,15 +118,15 @@ export const cadastroSchema = z.object({
   turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),
   inicioImediato: z.boolean(),
   disponibilidadeMudanca: z.boolean(),
-  formacoes: z.array(formacaoSchema).max(10, 'Informe no maximo 10 formacoes'),
+  formacoes: z.array(formacaoSchema).max(10, 'Informe no máximo 10 formações'),
   idiomas: z.string().optional(),
   pcd: z.boolean(),
-  pcdObservacao: z.string().max(200, 'Use no maximo 200 caracteres').optional(),
+  pcdObservacao: z.string().max(200, 'Use no máximo 200 caracteres').optional(),
   senha: z.string().min(8, 'A senha precisa ter ao menos 8 caracteres'),
-  experiencias: z.array(experienciaSchema).min(1, 'Informe ao menos um cargo').max(5, 'Informe no maximo 5 cargos'),
+  experiencias: z.array(experienciaSchema).min(1, 'Informe ao menos um cargo').max(5, 'Informe no máximo 5 cargos'),
   habilidades: z.string().min(2, 'Liste ao menos uma habilidade'),
   aceiteTermoLgpd: z.literal(true, {
-    errorMap: () => ({ message: 'E necessario aceitar o termo para continuar' }),
+    errorMap: () => ({ message: 'É necessário aceitar o termo para continuar' }),
   }),
 });
 

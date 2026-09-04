@@ -83,6 +83,44 @@ type Indicadores = {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 
+const rotulos: Record<string, string> = {
+  FUNDAMENTAL_INCOMPLETO: 'Fundamental incompleto',
+  FUNDAMENTAL_COMPLETO: 'Fundamental completo',
+  MEDIO_INCOMPLETO: 'Médio incompleto',
+  MEDIO_COMPLETO: 'Médio completo',
+  SUPERIOR_INCOMPLETO: 'Superior incompleto',
+  SUPERIOR_COMPLETO: 'Superior completo',
+  POS_GRADUACAO: 'Pós-graduação',
+  producao: 'Produção',
+  manutencao: 'Manutenção',
+  administrativo: 'Administrativo',
+  logistica: 'Logística',
+  qualidade: 'Qualidade',
+  comercial: 'Comercial',
+  ti: 'TI',
+  engenharia: 'Engenharia',
+  outra: 'Outra',
+  ate_1500: 'Até R$ 1.500',
+  '1501_2500': 'R$ 1.501 a R$ 2.500',
+  '2501_3500': 'R$ 2.501 a R$ 3.500',
+  '3501_5000': 'R$ 3.501 a R$ 5.000',
+  acima_5000: 'Acima de R$ 5.000',
+  sem_experiencia: 'Sem experiência',
+  ate_1_ano: 'Até 1 ano',
+  '1_3_anos': '1 a 3 anos',
+  '3_5_anos': '3 a 5 anos',
+  mais_5_anos: 'Mais de 5 anos',
+  manha: 'Manhã',
+  tarde: 'Tarde',
+  noite: 'Noite',
+  revezamento: 'Revezamento',
+};
+
+function rotulo(valor?: string | null) {
+  if (!valor) return 'Não informado';
+  return rotulos[valor] ?? valor;
+}
+
 function formatarData(valor: string) {
   return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short' }).format(new Date(valor));
 }
@@ -260,7 +298,7 @@ export default function AdminPage() {
       });
       if (!res.ok) throw new Error('Não foi possível excluir o candidato.');
       setCandidatos((atuais) => atuais.filter((candidato) => candidato.id !== id));
-      setMensagem('Dados excluidos conforme solicitacao LGPD.');
+      setMensagem('Dados excluídos conforme solicitação LGPD.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     }
@@ -686,7 +724,7 @@ export default function AdminPage() {
                       </span>
                     </div>
                     <p className="mt-1 text-sm text-slate-600">
-                      {candidato.cargoPretendido ?? experiencia?.cargo ?? 'Cargo não informado'} - {candidato.areaPretendida ?? experiencia?.area ?? 'Área não informada'} - {candidato.regiao}
+                      {candidato.cargoPretendido ?? experiencia?.cargo ?? 'Cargo não informado'} - {rotulo(candidato.areaPretendida ?? experiencia?.area)} - {candidato.regiao}
                       {candidato.uf ? `/${candidato.uf}` : ''}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -743,19 +781,19 @@ export default function AdminPage() {
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Escolaridade</dt>
-                      <dd>{candidato.escolaridade.replaceAll('_', ' ')}</dd>
+                      <dd>{rotulo(candidato.escolaridade)}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Pretensão</dt>
-                      <dd>{candidato.pretensaoSalarial?.replaceAll('_', ' ') ?? 'Não informada'}</dd>
+                      <dd>{rotulo(candidato.pretensaoSalarial)}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Experiência total</dt>
-                      <dd>{candidato.anosExperienciaTotal?.replaceAll('_', ' ') ?? 'Não informada'}</dd>
+                      <dd>{rotulo(candidato.anosExperienciaTotal)}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Turnos</dt>
-                      <dd>{candidato.turnos?.length ? candidato.turnos.join(', ') : 'Não informado'}</dd>
+                      <dd>{candidato.turnos?.length ? candidato.turnos.map(rotulo).join(', ') : 'Não informado'}</dd>
                     </div>
                     <div>
                       <dt className="font-semibold text-slate-500">Mudança</dt>
