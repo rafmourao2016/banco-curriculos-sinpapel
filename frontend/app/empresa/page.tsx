@@ -46,6 +46,8 @@ export default function EmpresaPage() {
   const [cnpjEmpresa, setCnpjEmpresa] = useState('');
   const [erroCnpj, setErroCnpj] = useState<string | null>(null);
   const [mostrarRecuperacao, setMostrarRecuperacao] = useState(false);
+  const [mensagemRecuperacao, setMensagemRecuperacao] = useState<string | null>(null);
+  const [erroRecuperacao, setErroRecuperacao] = useState<string | null>(null);
   const [codigo2fa, setCodigo2fa] = useState('');
   const [exige2fa, setExige2fa] = useState(false);
   const [twoFaAtivo, setTwoFaAtivo] = useState(false);
@@ -107,8 +109,10 @@ export default function EmpresaPage() {
   async function solicitarRecuperacao() {
     setErro(null);
     setMensagem(null);
+    setErroRecuperacao(null);
+    setMensagemRecuperacao(null);
     if (!email.trim() || !email.includes('@')) {
-      setErro('Informe um e-mail valido para receber o link.');
+      setErroRecuperacao('Informe um e-mail valido para receber o link.');
       return;
     }
     setCarregando(true);
@@ -120,9 +124,9 @@ export default function EmpresaPage() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message ?? 'Nao foi possivel solicitar a recuperacao.');
-      setMensagem(`${data.mensagem ?? 'Confira seu e-mail para redefinir a senha.'} Verifique também a pasta de spam, lixo eletrônico ou promoções.`);
+      setMensagemRecuperacao(`${data.mensagem ?? 'Confira seu e-mail para redefinir a senha.'} Verifique tambem a pasta de spam, lixo eletronico ou promocoes.`);
     } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+      setErroRecuperacao(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
       setCarregando(false);
     }
@@ -426,7 +430,19 @@ export default function EmpresaPage() {
                   {mostrarRecuperacao && (
                     <div className="grid gap-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">
                       <p>Informe o e-mail da empresa e enviaremos um link para criar uma nova senha.</p>
-                      <button type="button" onClick={solicitarRecuperacao} disabled={carregando} className="rounded-lg border border-brand-600 px-4 py-3 font-semibold text-brand-700 disabled:opacity-60">Enviar link de recuperacao</button>
+                      <button type="button" onClick={solicitarRecuperacao} disabled={carregando} className="rounded-lg border border-brand-600 px-4 py-3 font-semibold text-brand-700 disabled:opacity-60">
+                        {carregando ? 'Enviando...' : 'Enviar link de recuperacao'}
+                      </button>
+                      {mensagemRecuperacao && (
+                        <p role="status" className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-emerald-800">
+                          {mensagemRecuperacao}
+                        </p>
+                      )}
+                      {erroRecuperacao && (
+                        <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-700">
+                          {erroRecuperacao}
+                        </p>
+                      )}
                     </div>
                   )}
                 </form>
