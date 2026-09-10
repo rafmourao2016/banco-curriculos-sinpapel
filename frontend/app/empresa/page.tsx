@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
+import { ContadorCurriculos } from '../components/contador-curriculos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const inputClasses = 'w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10';
@@ -600,6 +601,8 @@ export default function EmpresaPage() {
                 {vagas.length === 0 && <p className="text-sm text-slate-600">Nenhuma necessidade cadastrada.</p>}
               </div>
             </section>
+
+            <ContadorCurriculos token={token} />
 
             <form onSubmit={buscar} className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:grid-cols-2 lg:grid-cols-6">
               <input name="q" className={inputClasses} placeholder="Nome, cargo ou habilidade" />

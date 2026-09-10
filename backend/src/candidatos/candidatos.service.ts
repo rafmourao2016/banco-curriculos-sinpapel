@@ -23,18 +23,6 @@ export class CandidatosService {
     return this.executarCadastroNaFila(() => this.cadastrarNoBanco(dto, ip));
   }
 
-  async estatisticasPublicas() {
-    const [totalCadastrados, curriculosAtivos] = await Promise.all([
-      this.prisma.candidato.count(),
-      this.prisma.candidato.count({ where: { ativo: true } }),
-    ]);
-
-    return {
-      totalCadastrados,
-      curriculosAtivos,
-    };
-  }
-
   private async executarCadastroNaFila<T>(tarefa: () => Promise<T>) {
     if (this.cadastrosAtivos >= this.concorrenciaCadastro) {
       await new Promise<void>((resolve) => this.filaCadastro.push(resolve));

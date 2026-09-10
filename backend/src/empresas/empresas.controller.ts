@@ -39,6 +39,12 @@ export class EmpresasController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('estatisticas')
+  estatisticasBanco(@Req() req: any) {
+    return this.empresasService.estatisticasBanco(req.empresaId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('candidatos')
   listarCandidatos(@Req() req: any, @Query() query: any) {
     return this.empresasService.listarCandidatos(req.empresaId, query);

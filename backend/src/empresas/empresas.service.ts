@@ -94,6 +94,19 @@ export class EmpresasService {
     return semSegredos;
   }
 
+  async estatisticasBanco(empresaId: string) {
+    await this.validarEmpresa(empresaId);
+    const [totalCadastrados, curriculosAtivos] = await Promise.all([
+      this.prisma.candidato.count(),
+      this.prisma.candidato.count({ where: { ativo: true } }),
+    ]);
+
+    return {
+      totalCadastrados,
+      curriculosAtivos,
+    };
+  }
+
   async listarCandidatos(
     empresaId: string,
     filtros: {
