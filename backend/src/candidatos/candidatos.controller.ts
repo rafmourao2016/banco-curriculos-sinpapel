@@ -15,6 +15,11 @@ export class CandidatosController {
     return this.candidatosService.cadastrar(dto, ip);
   }
 
+  @Get('estatisticas')
+  estatisticasPublicas() {
+    return this.candidatosService.estatisticasPublicas();
+  }
+
   // A partir daqui, apenas o próprio candidato autenticado tem acesso —
   // nunca outros candidatos ou o público em geral.
   @UseGuards(JwtAuthGuard)

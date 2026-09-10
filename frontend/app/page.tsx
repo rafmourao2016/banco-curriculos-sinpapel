@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ContadorCurriculos } from './components/contador-curriculos';
 
 export default function HomePage() {
   return (
@@ -21,9 +22,12 @@ export default function HomePage() {
           <p className="mt-6 max-w-3xl text-base leading-7 text-slate-700 sm:text-xl sm:leading-9 lg:text-2xl">
             Uma iniciativa alinhada à missão de congregar, promover e defender os interesses das empresas do setor em Minas Gerais.
           </p>
-          <p className="mt-4 max-w-3xl rounded-2xl border border-brand-600/20 bg-white/70 px-4 py-3 text-base font-medium leading-7 text-brand-700 shadow-sm sm:text-lg">
-            Escaneie o QR Code e cadastre seu currículo para participar do banco de oportunidades do SINPAPEL.
-          </p>
+          <div className="mt-5 grid max-w-3xl gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+            <p className="rounded-2xl border border-brand-600/20 bg-white/75 px-4 py-3 text-base font-medium leading-7 text-brand-700 shadow-sm sm:text-lg">
+              Cadastre seu currículo e participe do banco de oportunidades do SINPAPEL.
+            </p>
+            <ContadorCurriculos />
+          </div>
 
           <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
             <Link href="/cadastro" className="inline-flex justify-center rounded-xl bg-brand-600 px-5 py-4 text-base font-semibold text-white shadow-lg shadow-brand-600/20 hover:bg-brand-700">
