@@ -4,6 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
+import { cidadesMg, microrregioesMg } from '../../lib/localidades-mg';
 import { ContadorCurriculos } from '../components/contador-curriculos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -606,8 +607,18 @@ export default function EmpresaPage() {
 
             <form onSubmit={buscar} className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:grid-cols-2 lg:grid-cols-6">
               <input name="q" className={inputClasses} placeholder="Nome, cargo ou habilidade" />
-              <input name="regiao" className={inputClasses} placeholder="Cidade" />
-              <input name="cidades" className={inputClasses} placeholder="Microrregião: cidades separadas por vírgula" />
+              <select name="regiao" className={inputClasses} defaultValue="">
+                <option value="">Todas as cidades</option>
+                {cidadesMg.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
+              </select>
+              <select name="cidades" className={inputClasses} defaultValue="">
+                <option value="">Todas as microrregiões</option>
+                {microrregioesMg.map((microrregiao) => (
+                  <option key={microrregiao.nome} value={microrregiao.cidades.join(',')}>
+                    {microrregiao.nome}
+                  </option>
+                ))}
+              </select>
               <select name="area" className={inputClasses} defaultValue="">
                 <option value="">Todas as áreas</option>
                 {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
