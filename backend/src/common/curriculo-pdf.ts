@@ -1,4 +1,4 @@
-import PDFDocument from 'pdfkit';
+import PDFDocument = require('pdfkit');
 
 type CurriculoPdf = {
   nome: string;
@@ -41,19 +41,39 @@ type CurriculoPdf = {
 };
 
 function normalizar(valor?: string | null) {
-  return valor?.replaceAll('_', ' ') || 'Nao informado';
+  return texto(valor?.replaceAll('_', ' ')) || 'Não informado';
 }
 
-function data(valor?: Date | null) {
+function texto(valor?: unknown) {
+  return String(valor ?? '')
+    .replace(/[\u0000-\u001f\u007f-\u009f]/g, ' ')
+    .replace(/[\uD800-\uDFFF]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function lista<T>(valor: T[] | null | undefined): T[] {
+  return Array.isArray(valor) ? valor : [];
+}
+
+function data(valor?: Date | string | null) {
   if (!valor) return 'Atual';
-  return new Intl.DateTimeFormat('pt-BR').format(valor);
+  const data = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(data.getTime())) return 'Atual';
+  return new Intl.DateTimeFormat('pt-BR').format(data);
 }
 
 function habilidades(candidato: CurriculoPdf) {
-  return candidato.habilidades
-    .map((item) => (typeof item === 'string' ? item : item.habilidade?.nome))
+  return lista(candidato.habilidades)
+    .map((item) => (typeof item === 'string' ? item : item?.habilidade?.nome))
+    .map(texto)
     .filter(Boolean)
     .join(', ');
+}
+
+function listaTexto(valor?: string[] | null) {
+  const itens = lista(valor).map(texto).filter(Boolean);
+  return itens.length ? itens.join(', ') : 'Não informado';
 }
 
 export async function gerarCurriculoPdf(candidato: CurriculoPdf) {
@@ -61,75 +81,82 @@ export async function gerarCurriculoPdf(candidato: CurriculoPdf) {
   const chunks: Buffer[] = [];
 
   doc.on('data', (chunk: Buffer) => chunks.push(chunk));
-  const done = new Promise<Buffer>((resolve) => {
+  const done = new Promise<Buffer>((resolve, reject) => {
+    doc.on('error', reject);
     doc.on('end', () => resolve(Buffer.concat(chunks)));
   });
 
   doc.rect(0, 0, 595.28, 92).fill('#116dff');
-  doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text('BANCO DE CURRICULOS DO SINPAPEL', 48, 28);
-  doc.fontSize(24).text(candidato.nome, 48, 45, { width: 500 });
+  doc.fillColor('#ffffff').fontSize(10).font('Helvetica-Bold').text('BANCO DE CURRÍCULOS DO SINPAPEL', 48, 28);
+  doc.fontSize(24).text(texto(candidato.nome) || 'Candidato', 48, 45, { width: 500 });
 
   doc.fillColor('#111827').font('Helvetica').fontSize(10);
   doc.moveDown(3.2);
-  doc.text(`${candidato.email}  |  ${candidato.telefone}`);
-  doc.text(`${candidato.regiao}${candidato.uf ? `/${candidato.uf}` : ''}`);
+  doc.text(`${texto(candidato.email) || 'E-mail não informado'}  |  ${texto(candidato.telefone) || 'Telefone não informado'}`);
+  doc.text(`${texto(candidato.regiao) || 'Cidade não informada'}${candidato.uf ? `/${texto(candidato.uf)}` : ''}`);
   const endereco = [
-    candidato.logradouro,
-    candidato.numeroEndereco,
-    candidato.bairro,
-    candidato.cep ? `CEP ${candidato.cep}` : null,
+    texto(candidato.logradouro),
+    texto(candidato.numeroEndereco),
+    texto(candidato.bairro),
+    candidato.cep ? `CEP ${texto(candidato.cep)}` : null,
   ].filter(Boolean).join(', ');
   if (endereco) {
-    doc.text(`Endereco: ${endereco}${candidato.complementoEndereco ? ` - ${candidato.complementoEndereco}` : ''}`);
+    doc.text(`Endereço: ${endereco}${candidato.complementoEndereco ? ` - ${texto(candidato.complementoEndereco)}` : ''}`);
   }
 
   doc.moveDown(1.2);
   doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Objetivo profissional');
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
   doc.text(`Cargo pretendido: ${normalizar(candidato.cargoPretendido)}`);
-  doc.text(`Area pretendida: ${normalizar(candidato.areaPretendida)}`);
-  doc.text(`Pretensao salarial: ${normalizar(candidato.pretensaoSalarial)}`);
-  doc.text(`Turnos: ${candidato.turnos?.length ? candidato.turnos.join(', ') : 'Nao informado'}`);
+  doc.text(`Área pretendida: ${normalizar(candidato.areaPretendida)}`);
+  doc.text(`Pretensão salarial: ${normalizar(candidato.pretensaoSalarial)}`);
+  doc.text(`Turnos: ${listaTexto(candidato.turnos)}`);
 
   doc.moveDown(1.1);
   doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Resumo');
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
   doc.text(`Escolaridade: ${normalizar(candidato.escolaridade)}`);
-  doc.text(`Experiencia total: ${normalizar(candidato.anosExperienciaTotal)}`);
-  doc.text(`Experiencia no setor papel/embalagem: ${candidato.experienciaSetorPapel ? 'Sim' : 'Nao informado'}`);
-  doc.text(`CNH: ${candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Nao'}`);
-  doc.text(`Habilidades: ${habilidades(candidato) || 'Nao informado'}`);
+  doc.text(`Experiência total: ${normalizar(candidato.anosExperienciaTotal)}`);
+  doc.text(`Experiência no setor papel/embalagem: ${candidato.experienciaSetorPapel ? 'Sim' : 'Não informado'}`);
+  doc.text(`CNH: ${candidato.possuiCnh ? texto(candidato.categoriaCnh) || 'Sim' : 'Não'}`);
+  doc.text(`Habilidades: ${habilidades(candidato) || 'Não informado'}`);
 
   doc.moveDown(1.1);
-  doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Experiencia profissional');
+  doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Experiência profissional');
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
-  if (candidato.experiencias.length === 0) {
-    doc.text('Nao informado');
+  const experiencias = lista(candidato.experiencias);
+  if (experiencias.length === 0) {
+    doc.text('Não informado');
   } else {
-    candidato.experiencias.forEach((exp) => {
-      doc.font('Helvetica-Bold').text(exp.cargo);
-      doc.font('Helvetica').text(`${exp.empresa || 'Empresa nao informada'} - ${exp.area}`);
+    experiencias.forEach((exp) => {
+      doc.font('Helvetica-Bold').text(texto(exp.cargo) || 'Cargo não informado');
+      doc.font('Helvetica').text(`${texto(exp.empresa) || 'Empresa não informada'} - ${texto(exp.area) || 'Área não informada'}`);
       doc.text(`${data(exp.dataInicio)} a ${data(exp.dataFim)}`);
-      if (exp.descricao) doc.text(exp.descricao, { width: 500 });
+      if (exp.descricao) doc.text(texto(exp.descricao), { width: 500 });
       doc.moveDown(0.7);
     });
   }
 
-  doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Formacao');
+  doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Formação');
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
-  candidato.formacoes.forEach((formacao) => {
-    doc.font('Helvetica-Bold').text(formacao.curso);
-    doc.font('Helvetica').text(`${normalizar(formacao.nivel)} - ${formacao.instituicao} - ${normalizar(formacao.status)}${formacao.ano ? ` (${formacao.ano})` : ''}`);
-  });
+  const formacoes = lista(candidato.formacoes);
+  if (formacoes.length === 0) {
+    doc.text('Não informado');
+  } else {
+    formacoes.forEach((formacao) => {
+      doc.font('Helvetica-Bold').text(texto(formacao.curso) || 'Curso não informado');
+      doc.font('Helvetica').text(`${normalizar(formacao.nivel)} - ${texto(formacao.instituicao) || 'Instituição não informada'} - ${normalizar(formacao.status)}${formacao.ano ? ` (${formacao.ano})` : ''}`);
+    });
+  }
 
   doc.moveDown(1.1);
   doc.fillColor('#d10606').font('Helvetica-Bold').fontSize(13).text('Cursos e idiomas');
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
-  doc.text(`Cursos/certificacoes: ${candidato.cursosCertificacoes?.length ? candidato.cursosCertificacoes.join(', ') : 'Nao informado'}`);
-  doc.text(`Idiomas: ${candidato.idiomas?.length ? candidato.idiomas.join(', ') : 'Nao informado'}`);
+  doc.text(`Cursos/certificações: ${listaTexto(candidato.cursosCertificacoes)}`);
+  doc.text(`Idiomas: ${listaTexto(candidato.idiomas)}`);
 
   doc.moveDown(1.5);
-  doc.fillColor('#6b7280').fontSize(8).text('Curriculo gerado automaticamente pelo Banco de Curriculos do SINPAPEL.', { align: 'center' });
+  doc.fillColor('#6b7280').fontSize(8).text('Currículo gerado automaticamente pelo Banco de Currículos do SINPAPEL.', { align: 'center' });
   doc.end();
 
   return done;
