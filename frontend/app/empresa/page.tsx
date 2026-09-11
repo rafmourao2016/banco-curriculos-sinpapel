@@ -31,11 +31,32 @@ function rotulo(valor?: string | null) {
   return rotulos[valor] ?? valor;
 }
 
+function normalizarBusca(valor?: string | null) {
+  return (valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase();
+}
+
+function idadeEmAnos(dataNascimento?: string | null) {
+  if (!dataNascimento) return null;
+  const nascimento = new Date(dataNascimento);
+  if (Number.isNaN(nascimento.getTime())) return null;
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - nascimento.getFullYear();
+  const aniversarioAindaNaoChegou =
+    hoje.getMonth() < nascimento.getMonth() ||
+    (hoje.getMonth() === nascimento.getMonth() && hoje.getDate() < nascimento.getDate());
+  if (aniversarioAindaNaoChegou) idade -= 1;
+  return idade;
+}
+
 type CandidatoEmpresa = {
   id: string;
   nome: string;
   email: string;
   telefone: string;
+  dataNascimento?: string | null;
   regiao: string;
   uf?: string | null;
   cep?: string | null;
@@ -51,8 +72,24 @@ type CandidatoEmpresa = {
   dataAdmissaoEmpresa?: string | null;
   comentarioEmpresa?: string | null;
   habilidades: string[];
-  experiencias: Array<{ cargo: string }>;
+  anosExperienciaTotal?: string | null;
+  experiencias: Array<{ cargo: string; area?: string | null }>;
+  formacoes?: Array<{ curso?: string | null; nivel?: string | null }>;
 };
+
+function perfilJovemAprendiz(candidato: CandidatoEmpresa) {
+  if (candidato.interesseJovemAprendiz) return true;
+
+  const idade = idadeEmAnos(candidato.dataNascimento);
+  const textos = [
+    candidato.cargoPretendido,
+    ...candidato.experiencias.map((experiencia) => `${experiencia.cargo} ${experiencia.area ?? ''}`),
+    ...(candidato.formacoes ?? []).map((formacao) => `${formacao.curso ?? ''} ${formacao.nivel ?? ''}`),
+  ].map(normalizarBusca).join(' ');
+
+  const mencionaAprendiz = textos.includes('jovem aprendiz') || textos.includes('aprendizagem') || textos.includes('aprendiz');
+  return mencionaAprendiz || (idade !== null && idade >= 14 && idade <= 24 && candidato.anosExperienciaTotal === 'sem_experiencia');
+}
 
 type Vaga = {
   id: string;
@@ -355,6 +392,7 @@ export default function EmpresaPage() {
     const form = event?.currentTarget ? new FormData(event.currentTarget) : new FormData();
     try {
       const params = new URLSearchParams();
+      const tipoOportunidade = String(form.get('tipoOportunidade') ?? '').trim();
       ['q', 'tipoOportunidade', 'area', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos'].forEach((campo) => {
         const valor = String(form.get(campo) ?? '').trim();
         if (valor) params.set(campo, valor);
@@ -368,7 +406,7 @@ export default function EmpresaPage() {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
         throw new Error(detalhe ?? 'Não foi possível consultar candidatos.');
       }
-      setCandidatos(data);
+      setCandidatos(tipoOportunidade === 'jovem_aprendiz' ? data.filter(perfilJovemAprendiz) : data);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
