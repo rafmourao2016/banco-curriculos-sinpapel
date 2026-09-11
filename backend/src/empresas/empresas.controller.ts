@@ -79,6 +79,12 @@ export class EmpresasController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('vagas/:id/excluir')
+  excluirVagaPost(@Req() req: any, @Param('id') vagaId: string) {
+    return this.empresasService.excluirVaga(req.empresaId, vagaId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('candidatos/:id/pdf')
   @Header('Content-Type', 'application/pdf')
   async baixarPdf(@Req() req: any, @Param('id') candidatoId: string, @Res() res: Response) {
