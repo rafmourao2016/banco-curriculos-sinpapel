@@ -1,7 +1,12 @@
 node_modules/
 dist/
 .next/
+.vercel
+*.tsbuildinfo
+output/
+output*/
 .env
 .env.*
 !.env.example
 *.log
+

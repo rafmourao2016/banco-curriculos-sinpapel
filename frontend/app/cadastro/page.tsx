@@ -18,6 +18,7 @@ import {
 import { cadastrarCandidato } from '../../lib/api';
 import { apenasDigitos } from '../../lib/documentos';
 import { Campo } from '../../components/Campo';
+import { Localidade } from '../../components/Localidade';
 
 const inputClasses =
   'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-600/15';
@@ -49,6 +50,7 @@ export default function CadastroPage() {
     handleSubmit,
     control,
     setValue,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<CadastroFormValues>({
     resolver: zodResolver(cadastroSchema),
@@ -57,6 +59,8 @@ export default function CadastroPage() {
       experienciaSetorPapel: false,
       turnos: [],
       cep: '',
+      uf: 'MG',
+      regiao: '',
       logradouro: '',
       bairro: '',
       numeroEndereco: '',
@@ -246,13 +250,12 @@ export default function CadastroPage() {
               <input id="complementoEndereco" autoComplete="address-line3" className={inputClasses} placeholder="Apto, bloco, referência..." {...register('complementoEndereco')} />
             </Campo>
 
-            <Campo id="regiao" label="Cidade / região" erro={errors.regiao?.message}>
-              <input id="regiao" autoComplete="address-level2" className={inputClasses} {...register('regiao')} />
-            </Campo>
-
-            <Campo id="uf" label="UF" erro={errors.uf?.message}>
-              <input id="uf" autoComplete="address-level1" className={inputClasses} maxLength={2} placeholder="MG" {...register('uf')} />
-            </Campo>
+            <Localidade uf={watch('uf')} cidade={watch('regiao')} className={inputClasses}
+              onChange={(uf, cidade) => {
+                setValue('uf', uf, { shouldDirty: true, shouldValidate: true });
+                setValue('regiao', cidade, { shouldDirty: true, shouldValidate: true });
+              }} />
+            {(errors.uf || errors.regiao) && <p role="alert" className="text-sm text-red-600 sm:col-span-2">{errors.uf?.message || errors.regiao?.message}</p>}
           </section>
 
           <section className="grid gap-5 sm:grid-cols-2">

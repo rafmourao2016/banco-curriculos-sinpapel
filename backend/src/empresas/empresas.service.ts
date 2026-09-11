@@ -113,6 +113,7 @@ export class EmpresasService {
       q?: string;
       area?: string;
       regiao?: string;
+      uf?: string;
       escolaridade?: string;
       experiencia?: string;
       cnh?: string;
@@ -131,7 +132,7 @@ export class EmpresasService {
       ?.split(',')
       .map((cidade) => cidade.trim())
       .filter(Boolean)
-      .slice(0, 20);
+      .slice(0, 853);
     const cursos = filtros.cursos
       ?.split(',')
       .map((curso) => curso.trim())
@@ -143,7 +144,7 @@ export class EmpresasService {
 
     const and: any[] = [];
     if (cidades?.length) {
-      and.push({ OR: cidades.map((cidade) => ({ regiao: { contains: cidade, mode: 'insensitive' as const } })) });
+      and.push({ OR: cidades.map((cidade) => ({ regiao: { equals: cidade, mode: 'insensitive' as const } })) });
     }
     if (termo && !idsSemanticos) {
       and.push({
@@ -164,7 +165,8 @@ export class EmpresasService {
         ...(idsSemanticos ? { id: { in: idsSemanticos } } : {}),
         ...(filtros.tipoOportunidade === 'jovem_aprendiz' ? { interesseJovemAprendiz: true } : {}),
         ...(filtros.area ? { areaPretendida: filtros.area } : {}),
-        ...(filtros.regiao ? { regiao: { contains: filtros.regiao, mode: 'insensitive' } } : {}),
+        ...(filtros.regiao ? { regiao: { equals: filtros.regiao.trim(), mode: 'insensitive' } } : {}),
+        ...(filtros.uf ? { uf: { equals: filtros.uf.trim(), mode: 'insensitive' } } : {}),
         ...(filtros.escolaridade ? { escolaridade: filtros.escolaridade as any } : {}),
         ...(filtros.experiencia ? { anosExperienciaTotal: filtros.experiencia } : {}),
         ...(filtros.cnh === 'sim' ? { possuiCnh: true } : {}),

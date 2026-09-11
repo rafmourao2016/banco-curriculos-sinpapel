@@ -4,7 +4,7 @@ import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
-import { cidadesMg, microrregioesMg } from '../../lib/localidades-mg';
+import { Localidade } from '../../components/Localidade';
 import { ContadorCurriculos } from '../components/contador-curriculos';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
@@ -393,7 +393,7 @@ export default function EmpresaPage() {
     try {
       const params = new URLSearchParams();
       const tipoOportunidade = String(form.get('tipoOportunidade') ?? '').trim();
-      ['q', 'tipoOportunidade', 'area', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos'].forEach((campo) => {
+      ['q', 'tipoOportunidade', 'area', 'uf', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos'].forEach((campo) => {
         const valor = String(form.get(campo) ?? '').trim();
         if (valor) params.set(campo, valor);
       });
@@ -650,18 +650,7 @@ export default function EmpresaPage() {
                 <option value="">Todos os perfis</option>
                 <option value="jovem_aprendiz">Jovem Aprendiz</option>
               </select>
-              <select name="regiao" className={inputClasses} defaultValue="">
-                <option value="">Todas as cidades</option>
-                {cidadesMg.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
-              </select>
-              <select name="cidades" className={inputClasses} defaultValue="">
-                <option value="">Todas as microrregiões</option>
-                {microrregioesMg.map((microrregiao) => (
-                  <option key={microrregiao.nome} value={microrregiao.cidades.join(',')}>
-                    {microrregiao.nome}
-                  </option>
-                ))}
-              </select>
+              <Localidade filtro className={inputClasses} />
               <select name="area" className={inputClasses} defaultValue="">
                 <option value="">Todas as áreas</option>
                 {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}

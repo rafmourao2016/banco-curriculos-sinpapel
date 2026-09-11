@@ -2,10 +2,16 @@
 
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
+import { Localidade } from '../../components/Localidade';
 import { areaPretendidaOptions, anosExperienciaOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const inputClasses = 'w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10';
+
+function LocalidadePerfil({ uf, cidade }: { uf: string; cidade: string }) {
+  const [local, setLocal] = useState({ uf, cidade });
+  return <Localidade {...local} className={inputClasses} onChange={(uf, cidade) => setLocal({ uf, cidade })} />;
+}
 
 type Perfil = {
   id: string;
@@ -294,8 +300,7 @@ export default function CandidatoPage() {
 
             <section className="grid gap-4 sm:grid-cols-2">
               <input name="telefone" defaultValue={perfil.telefone} className={inputClasses} placeholder="Telefone" />
-              <input name="regiao" defaultValue={perfil.regiao} className={inputClasses} placeholder="Cidade" />
-              <input name="uf" defaultValue={perfil.uf ?? 'MG'} maxLength={2} className={inputClasses} placeholder="UF" />
+              <LocalidadePerfil key={perfil.id} uf={perfil.uf ?? 'MG'} cidade={perfil.regiao} />
               <input name="cargoPretendido" defaultValue={perfil.cargoPretendido ?? ''} className={inputClasses} placeholder="Cargo pretendido" />
               <select name="areaPretendida" defaultValue={perfil.areaPretendida ?? 'producao'} className={inputClasses}>
                 {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
