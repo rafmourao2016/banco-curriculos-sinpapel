@@ -441,7 +441,22 @@ export default function EmpresaPage() {
   return (
     <main className="min-h-screen bg-paper px-4 py-5 text-slate-950 sm:py-8">
       <div className="mx-auto max-w-6xl">
-        <div className="logo-spotlight">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-brand-600 hover:text-brand-700"
+          >
+            Voltar ao início
+          </Link>
+          <Link
+            href="/cadastro"
+            className="inline-flex min-h-11 items-center justify-center rounded-lg border border-brand-600 bg-white px-4 py-2 text-sm font-semibold text-brand-700 shadow-sm transition hover:bg-brand-50"
+          >
+            Cadastrar currículo
+          </Link>
+        </div>
+
+        <div className="logo-spotlight mt-6">
           <img
             src="/logo-sinpapel.png"
             alt="SINPAPEL - Sindicato das Indústrias de Celulose, Papel e Papelão no Estado de Minas Gerais"
