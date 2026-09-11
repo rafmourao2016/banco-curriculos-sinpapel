@@ -144,7 +144,7 @@ export class EmpresasService {
 
     const and: any[] = [];
     if (cidades?.length) {
-      and.push({ OR: cidades.map((cidade) => ({ regiao: { equals: cidade, mode: 'insensitive' as const } })) });
+      and.push({ OR: cidades.map((cidade) => ({ regiao: { contains: cidade, mode: 'insensitive' as const } })) });
     }
     if (termo && !idsSemanticos) {
       and.push({
@@ -165,7 +165,7 @@ export class EmpresasService {
         ...(idsSemanticos ? { id: { in: idsSemanticos } } : {}),
         ...(filtros.tipoOportunidade === 'jovem_aprendiz' ? { interesseJovemAprendiz: true } : {}),
         ...(filtros.area ? { areaPretendida: filtros.area } : {}),
-        ...(filtros.regiao ? { regiao: { equals: filtros.regiao.trim(), mode: 'insensitive' } } : {}),
+        ...(filtros.regiao ? { regiao: { contains: filtros.regiao.trim(), mode: 'insensitive' } } : {}),
         ...(filtros.uf ? { uf: { equals: filtros.uf.trim(), mode: 'insensitive' } } : {}),
         ...(filtros.escolaridade ? { escolaridade: filtros.escolaridade as any } : {}),
         ...(filtros.experiencia ? { anosExperienciaTotal: filtros.experiencia } : {}),
