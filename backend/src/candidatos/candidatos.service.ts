@@ -129,12 +129,22 @@ export class CandidatosService {
             ip,
           },
         },
+        habilidades: {
+          create: habilidades.map((h) => ({ habilidadeId: h.id })),
+        },
+        termoConsentimento: {
+          create: {
+            versao: '1.0',
+            ip,
+          },
+        },
       },
       include: { experiencias: true, formacoes: true, habilidades: true },
     });
 
     const { senhaHash: _omit, ...candidatoSemSenha } = candidato;
     await this.registrarAlertasCompatibilidade(candidato.id, dto.areaPretendida);
+    void this.atualizarEmbedding(candidato.id).catch(() => {});
     return candidatoSemSenha;
   }
 
@@ -188,6 +198,7 @@ export class CandidatosService {
     if (dto.areaPretendida) {
       await this.registrarAlertasCompatibilidade(candidatoId, dto.areaPretendida);
     }
+    void this.atualizarEmbedding(candidatoId).catch(() => {});
     return resto;
   }
 

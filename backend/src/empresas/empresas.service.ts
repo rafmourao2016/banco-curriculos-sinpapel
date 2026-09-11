@@ -226,17 +226,82 @@ export class EmpresasService {
     if (cache && cache.expiraEm > Date.now()) return cache.ids;
 
     const embedding = await gerarEmbedding(consulta);
-    const linhas = await this.prisma.$queryRawUnsafe<Array<{ id: string }>>(
-      `select id::text
-       from candidatos
-       where ativo = true and embedding is not null
-       order by embedding <=> $1::vector
-       limit 100`,
-      vetorPg(embedding),
-    );
+    let linhas: Array<{ id: string }> = [];
+    try {
+      linhas = await this.prisma.$queryRawUnsafe<Array<{ id: string }>>(
+        `select id::text
+         from candidatos
+         where ativo = true and embedding is not null
+         order by embedding <=> $1::vector
+         limit 100`,
+        vetorPg(embedding),
+      );
+
+      if (linhas.length === 0) {
+        const totalComEmbedding = await this.prisma.$queryRawUnsafe<Array<{ count: number }>>(
+          `select count(*)::int as count from candidatos where embedding is not null`,
+        );
+        if ((totalComEmbedding[0]?.count ?? 0) === 0) {
+          await this.backfillEmbeddingsAutomatico();
+          linhas = await this.prisma.$queryRawUnsafe<Array<{ id: string }>>(
+            `select id::text
+             from candidatos
+             where ativo = true and embedding is not null
+             order by embedding <=> $1::vector
+             limit 100`,
+            vetorPg(embedding),
+          );
+        }
+      }
+    } catch {
+      linhas = [];
+    }
+
     const ids = linhas.map((linha) => linha.id);
-    semanticCache.set(chave, { ids, expiraEm: Date.now() + SEMANTIC_CACHE_TTL_MS });
+    if (ids.length > 0) {
+      semanticCache.set(chave, { ids, expiraEm: Date.now() + SEMANTIC_CACHE_TTL_MS });
+    }
     return ids;
+  }
+
+  private async backfillEmbeddingsAutomatico() {
+    try {
+      const candidatos = await this.prisma.candidato.findMany({
+        where: { ativo: true },
+        include: {
+          experiencias: true,
+          formacoes: true,
+          habilidades: { include: { habilidade: true } },
+        },
+        take: 200,
+      });
+
+      for (const candidato of candidatos) {
+        const texto = [
+          candidato.nome,
+          candidato.regiao,
+          candidato.uf,
+          candidato.escolaridade,
+          candidato.areaPretendida,
+          candidato.cargoPretendido,
+          candidato.anosExperienciaTotal,
+          candidato.cursosCertificacoes.join(' '),
+          candidato.idiomas.join(' '),
+          candidato.experiencias.map((exp) => `${exp.cargo} ${exp.area} ${exp.empresa ?? ''} ${exp.descricao ?? ''}`).join(' '),
+          candidato.formacoes.map((formacao) => `${formacao.curso} ${formacao.instituicao}`).join(' '),
+          candidato.habilidades.map((item) => item.habilidade.nome).join(' '),
+        ].filter(Boolean).join(' ');
+
+        const embedding = await gerarEmbedding(texto);
+        await this.prisma.$executeRawUnsafe(
+          `update candidatos set embedding = $1::vector where id = $2::uuid`,
+          vetorPg(embedding),
+          candidato.id,
+        );
+      }
+    } catch {
+      // continua sem erro caso a extensão vector ainda não esteja instalada no banco
+    }
   }
 
   async atualizarStatusCandidato(
