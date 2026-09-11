@@ -31,6 +31,7 @@ model Candidato {
   categoriaCnh           String?   @map("categoria_cnh")
   areaPretendida         String?   @map("area_pretendida")
   cargoPretendido        String?   @map("cargo_pretendido")
+  interesseJovemAprendiz Boolean   @default(false) @map("interesse_jovem_aprendiz")
   pretensaoSalarial      String?   @map("pretensao_salarial")
   experienciaSetorPapel  Boolean?  @map("experiencia_setor_papel")
   anosExperienciaTotal   String?   @map("anos_experiencia_total")

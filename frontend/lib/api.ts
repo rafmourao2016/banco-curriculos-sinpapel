@@ -11,7 +11,7 @@ function listaPorVirgula(valor?: string) {
 }
 
 export async function cadastrarCandidato(dados: CadastroFormValues) {
-  const payload = {
+  const payload: Record<string, unknown> = {
     nome: dados.nome,
     cpf: apenasDigitos(dados.cpf),
     email: dados.email,
@@ -29,6 +29,7 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
     categoriaCnh: dados.categoriaCnh,
     areaPretendida: dados.areaPretendida,
     cargoPretendido: dados.cargoPretendido,
+    interesseJovemAprendiz: dados.interesseJovemAprendiz,
     pretensaoSalarial: dados.pretensaoSalarial,
     experienciaSetorPapel: dados.experienciaSetorPapel,
     anosExperienciaTotal: dados.anosExperienciaTotal,
@@ -59,11 +60,25 @@ export async function cadastrarCandidato(dados: CadastroFormValues) {
     aceiteTermoLgpd: dados.aceiteTermoLgpd,
   };
 
-  const res = await fetch(`${API_URL}/candidatos`, {
+  let res = await fetch(`${API_URL}/candidatos`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
+
+  if (!res.ok) {
+    const erro = await res.clone().json().catch(() => ({}));
+    const mensagem = Array.isArray(erro.message) ? erro.message.join(' ') : String(erro.message ?? '');
+    if (mensagem.includes('interesseJovemAprendiz')) {
+      const payloadCompatibilidade = { ...payload };
+      delete payloadCompatibilidade.interesseJovemAprendiz;
+      res = await fetch(`${API_URL}/candidatos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payloadCompatibilidade),
+      });
+    }
+  }
 
   if (!res.ok) {
     const erro = await res.json().catch(() => ({}));

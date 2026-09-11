@@ -101,6 +101,10 @@ export class CriarCandidatoDto {
   @MaxLength(120)
   cargoPretendido: string;
 
+  @IsOptional()
+  @IsBoolean()
+  interesseJovemAprendiz?: boolean;
+
   @IsIn(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000'])
   pretensaoSalarial: string;
 

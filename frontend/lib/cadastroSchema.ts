@@ -112,6 +112,7 @@ export const cadastroSchema = z.object({
   categoriaCnh: z.string().optional(),
   areaPretendida: z.enum(['producao', 'manutencao', 'administrativo', 'logistica', 'qualidade', 'comercial', 'ti', 'engenharia', 'outra']),
   cargoPretendido: z.string().min(2, 'Informe o cargo pretendido'),
+  interesseJovemAprendiz: z.boolean(),
   pretensaoSalarial: z.enum(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000']),
   experienciaSetorPapel: z.boolean(),
   anosExperienciaTotal: z.enum(['sem_experiencia', 'ate_1_ano', '1_3_anos', '3_5_anos', 'mais_5_anos']),

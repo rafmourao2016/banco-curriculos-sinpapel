@@ -122,6 +122,7 @@ export class EmpresasService {
       cursos?: string;
       cidades?: string;
       semantica?: string;
+      tipoOportunidade?: string;
     },
   ) {
     await this.validarEmpresa(empresaId);
@@ -161,6 +162,7 @@ export class EmpresasService {
       where: {
         ativo: true,
         ...(idsSemanticos ? { id: { in: idsSemanticos } } : {}),
+        ...(filtros.tipoOportunidade === 'jovem_aprendiz' ? { interesseJovemAprendiz: true } : {}),
         ...(filtros.area ? { areaPretendida: filtros.area } : {}),
         ...(filtros.regiao ? { regiao: { contains: filtros.regiao, mode: 'insensitive' } } : {}),
         ...(filtros.escolaridade ? { escolaridade: filtros.escolaridade as any } : {}),

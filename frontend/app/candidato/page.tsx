@@ -16,6 +16,7 @@ type Perfil = {
   uf?: string | null;
   areaPretendida?: string | null;
   cargoPretendido?: string | null;
+  interesseJovemAprendiz?: boolean | null;
   pretensaoSalarial?: string | null;
   experienciaSetorPapel?: boolean | null;
   anosExperienciaTotal?: string | null;
@@ -121,12 +122,13 @@ export default function CandidatoPage() {
     const form = new FormData(event.currentTarget);
 
     try {
-      const body = {
+      const body: Record<string, unknown> = {
         telefone: String(form.get('telefone') ?? ''),
         regiao: String(form.get('regiao') ?? ''),
         uf: String(form.get('uf') ?? '').toUpperCase(),
         areaPretendida: String(form.get('areaPretendida') ?? ''),
         cargoPretendido: String(form.get('cargoPretendido') ?? ''),
+        interesseJovemAprendiz: form.get('interesseJovemAprendiz') === 'on',
         pretensaoSalarial: String(form.get('pretensaoSalarial') ?? ''),
         experienciaSetorPapel: form.get('experienciaSetorPapel') === 'on',
         anosExperienciaTotal: String(form.get('anosExperienciaTotal') ?? ''),
@@ -141,11 +143,24 @@ export default function CandidatoPage() {
         pcdObservacao: String(form.get('pcdObservacao') ?? ''),
       };
 
-      const res = await fetch(`${API_URL}/candidatos/me`, {
+      let res = await fetch(`${API_URL}/candidatos/me`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const data = await res.clone().json().catch(() => ({}));
+        const detalhe = Array.isArray(data.message) ? data.message.join(' ') : String(data.message ?? '');
+        if (detalhe.includes('interesseJovemAprendiz')) {
+          const bodyCompatibilidade = { ...body };
+          delete bodyCompatibilidade.interesseJovemAprendiz;
+          res = await fetch(`${API_URL}/candidatos/me`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+            body: JSON.stringify(bodyCompatibilidade),
+          });
+        }
+      }
       if (!res.ok) throw new Error('Não foi possível atualizar seu currículo.');
       await carregarPerfil(token);
       setMensagem('Currículo atualizado e disponibilidade renovada.');
@@ -309,6 +324,7 @@ export default function CandidatoPage() {
               {[
                 ['possuiCnh', 'Possuo CNH', perfil.possuiCnh],
                 ['experienciaSetorPapel', 'Tenho experiência no setor papel/embalagem', !!perfil.experienciaSetorPapel],
+                ['interesseJovemAprendiz', 'Tenho interesse em vaga de Jovem Aprendiz', !!perfil.interesseJovemAprendiz],
                 ['inicioImediato', 'Tenho início imediato', !!perfil.inicioImediato],
                 ['disponibilidadeMudanca', 'Tenho disponibilidade para mudança', !!perfil.disponibilidadeMudanca],
                 ['pcd', 'Sou PCD', !!perfil.pcd],

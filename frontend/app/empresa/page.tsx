@@ -46,6 +46,7 @@ type CandidatoEmpresa = {
   possuiCnh: boolean;
   categoriaCnh?: string | null;
   cargoPretendido?: string | null;
+  interesseJovemAprendiz?: boolean | null;
   statusEmpresa?: string | null;
   dataAdmissaoEmpresa?: string | null;
   comentarioEmpresa?: string | null;
@@ -354,7 +355,7 @@ export default function EmpresaPage() {
     const form = event?.currentTarget ? new FormData(event.currentTarget) : new FormData();
     try {
       const params = new URLSearchParams();
-      ['q', 'area', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos'].forEach((campo) => {
+      ['q', 'tipoOportunidade', 'area', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos'].forEach((campo) => {
         const valor = String(form.get(campo) ?? '').trim();
         if (valor) params.set(campo, valor);
       });
@@ -607,6 +608,10 @@ export default function EmpresaPage() {
 
             <form onSubmit={buscar} className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:grid-cols-2 lg:grid-cols-6">
               <input name="q" className={inputClasses} placeholder="Nome, cargo ou habilidade" />
+              <select name="tipoOportunidade" className={inputClasses} defaultValue="">
+                <option value="">Todos os perfis</option>
+                <option value="jovem_aprendiz">Jovem Aprendiz</option>
+              </select>
               <select name="regiao" className={inputClasses} defaultValue="">
                 <option value="">Todas as cidades</option>
                 {cidadesMg.map((cidade) => <option key={cidade} value={cidade}>{cidade}</option>)}
@@ -665,6 +670,11 @@ export default function EmpresaPage() {
                       <h3 className="text-xl font-semibold">{candidato.nome}</h3>
                       <p className="mt-1 text-sm text-slate-600">{candidato.cargoPretendido ?? candidato.experiencias[0]?.cargo ?? 'Cargo não informado'} - {candidato.regiao}{candidato.uf ? `/${candidato.uf}` : ''}</p>
                       <div className="mt-3 flex flex-wrap gap-2">
+                        {candidato.interesseJovemAprendiz && (
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                            Jovem Aprendiz
+                          </span>
+                        )}
                         {candidato.habilidades.map((habilidade) => <span key={habilidade} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{habilidade}</span>)}
                       </div>
                     </div>

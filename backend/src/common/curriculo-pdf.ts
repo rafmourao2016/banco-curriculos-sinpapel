@@ -16,6 +16,7 @@ type CurriculoPdf = {
   categoriaCnh?: string | null;
   areaPretendida?: string | null;
   cargoPretendido?: string | null;
+  interesseJovemAprendiz?: boolean | null;
   pretensaoSalarial?: string | null;
   experienciaSetorPapel?: boolean | null;
   anosExperienciaTotal?: string | null;
@@ -109,6 +110,7 @@ export async function gerarCurriculoPdf(candidato: CurriculoPdf) {
   doc.fillColor('#111827').font('Helvetica').fontSize(10).moveDown(0.4);
   doc.text(`Cargo pretendido: ${normalizar(candidato.cargoPretendido)}`);
   doc.text(`Área pretendida: ${normalizar(candidato.areaPretendida)}`);
+  doc.text(`Interesse em Jovem Aprendiz: ${candidato.interesseJovemAprendiz ? 'Sim' : 'Não'}`);
   doc.text(`Pretensão salarial: ${normalizar(candidato.pretensaoSalarial)}`);
   doc.text(`Turnos: ${listaTexto(candidato.turnos)}`);
 

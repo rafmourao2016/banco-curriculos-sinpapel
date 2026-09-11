@@ -63,6 +63,7 @@ export default function CadastroPage() {
       complementoEndereco: '',
       inicioImediato: false,
       disponibilidadeMudanca: false,
+      interesseJovemAprendiz: false,
       pcd: false,
       experiencias: [experienciaVazia],
       formacoes: [],
@@ -292,6 +293,15 @@ export default function CadastroPage() {
 
             <Campo id="cargoPretendido" label="Cargo pretendido" erro={errors.cargoPretendido?.message}>
               <input id="cargoPretendido" className={inputClasses} placeholder="Ex.: Auxiliar de produção" {...register('cargoPretendido')} />
+            </Campo>
+
+            <Campo id="interesseJovemAprendiz" label="Jovem Aprendiz" erro={errors.interesseJovemAprendiz?.message}>
+              <div className="flex min-h-[50px] items-center gap-3 rounded-xl border border-slate-300 px-4">
+                <input id="interesseJovemAprendiz" type="checkbox" className="h-5 w-5" {...register('interesseJovemAprendiz')} />
+                <label htmlFor="interesseJovemAprendiz" className="text-sm text-slate-700">
+                  Tenho interesse em vaga de Jovem Aprendiz
+                </label>
+              </div>
             </Campo>
 
             <Campo id="pretensaoSalarial" label="Pretensão salarial" erro={errors.pretensaoSalarial?.message}>
