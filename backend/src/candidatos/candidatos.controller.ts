@@ -27,8 +27,13 @@ export class CandidatosController {
   @Get('me/pdf')
   @Header('Content-Type', 'application/pdf')
   async baixarMeuPdf(@Req() req: any, @Res() res: Response) {
-    const pdf = await this.candidatosService.gerarPdfProprio(req.candidatoId);
-    res.setHeader('Content-Disposition', 'attachment; filename="meu-curriculo-sinpapel.pdf"');
+    const { pdf, nome } = await this.candidatosService.gerarPdfProprio(req.candidatoId);
+    const nomeLimpo = (nome || 'candidato')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9_-]/g, '_')
+      .replace(/_+/g, '_');
+    res.setHeader('Content-Disposition', `attachment; filename="curriculo-${nomeLimpo}.pdf"`);
     res.send(pdf);
   }
 

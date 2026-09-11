@@ -209,7 +209,10 @@ export default function CandidatoPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = 'meu-curriculo-sinpapel.pdf';
+      const nomeFormatado = perfil?.nome
+        ? perfil.nome.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-zA-Z0-9\s-_]/g, '').trim().replace(/\s+/g, '-').toLowerCase()
+        : 'meu-curriculo';
+      link.download = `curriculo-${nomeFormatado}.pdf`;
       link.click();
       window.URL.revokeObjectURL(url);
       setMensagem('PDF gerado com sucesso.');

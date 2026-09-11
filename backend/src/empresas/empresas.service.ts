@@ -310,7 +310,8 @@ export class EmpresasService {
       data: { empresaId, candidatoId },
     });
 
-    return gerarCurriculoPdf(candidato);
+    const pdf = await gerarCurriculoPdf(candidato);
+    return { pdf, nome: candidato.nome };
   }
 
   private async validarEmpresa(empresaId: string) {

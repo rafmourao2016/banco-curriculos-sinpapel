@@ -246,8 +246,9 @@ export class CandidatosService {
         habilidades: { include: { habilidade: true } },
       },
     });
-    if (!candidato) throw new NotFoundException('Candidato nÃ£o encontrado.');
-    return gerarCurriculoPdf(candidato);
+    if (!candidato) throw new NotFoundException('Candidato não encontrado.');
+    const pdf = await gerarCurriculoPdf(candidato);
+    return { pdf, nome: candidato.nome };
   }
 
   private async registrarAlertasCompatibilidade(candidatoId: string, areaPretendida?: string | null) {

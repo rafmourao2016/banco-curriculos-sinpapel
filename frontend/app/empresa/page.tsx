@@ -118,6 +118,8 @@ export default function EmpresaPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
+  const [buscandoCandidatos, setBuscandoCandidatos] = useState(false);
+  const [baixandoPdfId, setBaixandoPdfId] = useState<string | null>(null);
   const [candidatos, setCandidatos] = useState<CandidatoEmpresa[]>([]);
   const [vagas, setVagas] = useState<Vaga[]>([]);
 
@@ -384,11 +386,22 @@ export default function EmpresaPage() {
     }
   }
 
+  function formatarNomeArquivoCurriculo(nome: string) {
+    const nomeFormatado = (nome || 'candidato')
+      .trim()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-zA-Z0-9\s-_]/g, '')
+      .trim()
+      .replace(/\s+/g, '-');
+    return `curriculo-${nomeFormatado.toLowerCase() || 'candidato'}.pdf`;
+  }
+
   async function buscar(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     setErro(null);
     setMensagem(null);
-    setCarregando(true);
+    setBuscandoCandidatos(true);
     const form = event?.currentTarget ? new FormData(event.currentTarget) : new FormData();
     try {
       const params = new URLSearchParams();
@@ -410,16 +423,16 @@ export default function EmpresaPage() {
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
-      setCarregando(false);
+      setBuscandoCandidatos(false);
     }
   }
 
-  async function baixarPdf(candidatoId: string) {
+  async function baixarPdf(candidato: CandidatoEmpresa) {
     setErro(null);
     setMensagem(null);
-    setCarregando(true);
+    setBaixandoPdfId(candidato.id);
     try {
-      const res = await fetch(`${API_URL}/empresas/candidatos/${candidatoId}/pdf`, {
+      const res = await fetch(`${API_URL}/empresas/candidatos/${candidato.id}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Não foi possível baixar o PDF.');
@@ -427,14 +440,14 @@ export default function EmpresaPage() {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `curriculo-${candidatoId}.pdf`;
+      link.download = formatarNomeArquivoCurriculo(candidato.nome);
       link.click();
       window.URL.revokeObjectURL(url);
-      setMensagem('PDF baixado com sucesso.');
+      setMensagem(`PDF de ${candidato.nome} baixado com sucesso.`);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
-      setCarregando(false);
+      setBaixandoPdfId(null);
     }
   }
 
@@ -699,8 +712,8 @@ export default function EmpresaPage() {
                 <input name="semantica" type="checkbox" value="1" className="h-5 w-5" />
                 Usar busca semântica
               </label>
-              <button disabled={carregando} className="rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2 lg:col-span-6">
-                {carregando ? 'Buscando...' : 'Buscar candidatos'}
+              <button disabled={buscandoCandidatos} className="rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2 lg:col-span-6">
+                {buscandoCandidatos ? 'Buscando...' : 'Buscar candidatos'}
               </button>
             </form>
 
@@ -752,8 +765,13 @@ export default function EmpresaPage() {
                           </button>
                         ))}
                       </div>
-                      <button type="button" onClick={() => baixarPdf(candidato.id)} className="rounded-lg bg-singreen px-4 py-3 text-sm font-semibold text-white">
-                        Baixar PDF
+                      <button
+                        type="button"
+                        disabled={baixandoPdfId === candidato.id}
+                        onClick={() => baixarPdf(candidato)}
+                        className="rounded-lg bg-singreen px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60"
+                      >
+                        {baixandoPdfId === candidato.id ? 'Baixando PDF...' : 'Baixar PDF'}
                       </button>
                     </div>
                   </div>
