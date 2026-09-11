@@ -87,8 +87,11 @@ function perfilJovemAprendiz(candidato: CandidatoEmpresa) {
     ...(candidato.formacoes ?? []).map((formacao) => `${formacao.curso ?? ''} ${formacao.nivel ?? ''}`),
   ].map(normalizarBusca).join(' ');
 
-  const mencionaAprendiz = textos.includes('jovem aprendiz') || textos.includes('aprendizagem') || textos.includes('aprendiz');
-  return mencionaAprendiz || (idade !== null && idade >= 14 && idade <= 24 && candidato.anosExperienciaTotal === 'sem_experiencia');
+  const mencionaAprendiz = textos.includes('jovem aprendiz') || textos.includes('aprendizagem') || textos.includes('aprendiz') || textos.includes('jovem talento');
+  return (
+    mencionaAprendiz ||
+    (idade !== null && idade >= 14 && idade <= 24 && (!candidato.anosExperienciaTotal || candidato.anosExperienciaTotal === 'sem_experiencia' || candidato.anosExperienciaTotal === 'ate_1_ano'))
+  );
 }
 
 type Vaga = {
@@ -119,6 +122,7 @@ export default function EmpresaPage() {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
   const [buscandoCandidatos, setBuscandoCandidatos] = useState(false);
+  const [buscaRealizada, setBuscaRealizada] = useState(false);
   const [baixandoPdfId, setBaixandoPdfId] = useState<string | null>(null);
   const [candidatos, setCandidatos] = useState<CandidatoEmpresa[]>([]);
   const [vagas, setVagas] = useState<Vaga[]>([]);
@@ -402,6 +406,7 @@ export default function EmpresaPage() {
     setErro(null);
     setMensagem(null);
     setBuscandoCandidatos(true);
+    setBuscaRealizada(true);
     const form = event?.currentTarget ? new FormData(event.currentTarget) : new FormData();
     try {
       const params = new URLSearchParams();
@@ -718,6 +723,12 @@ export default function EmpresaPage() {
             </form>
 
             <div className="grid gap-3">
+              {buscaRealizada && candidatos.length > 0 && (
+                <div className="flex items-center justify-between px-1 py-1 text-sm font-semibold text-slate-700">
+                  <span>{candidatos.length === 1 ? '1 candidato encontrado' : `${candidatos.length} candidatos encontrados`}</span>
+                </div>
+              )}
+
               {candidatos.map((candidato) => (
                 <article key={candidato.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -777,9 +788,17 @@ export default function EmpresaPage() {
                   </div>
                 </article>
               ))}
-              {candidatos.length === 0 && (
+
+              {!buscaRealizada && (
                 <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-8 text-center text-slate-600">
                   Use os filtros e clique em Buscar candidatos.
+                </div>
+              )}
+
+              {buscaRealizada && candidatos.length === 0 && (
+                <div className="rounded-2xl border border-dashed border-amber-200 bg-amber-50/70 p-8 text-center">
+                  <p className="text-base font-semibold text-slate-900">Nenhum candidato encontrado com o perfil buscado.</p>
+                  <p className="mt-1 text-sm text-slate-600">Tente ajustar ou limpar os filtros acima para ampliar os resultados.</p>
                 </div>
               )}
             </div>

@@ -146,6 +146,32 @@ export class EmpresasService {
     if (cidades?.length) {
       and.push({ OR: cidades.map((cidade) => ({ regiao: { contains: cidade, mode: 'insensitive' as const } })) });
     }
+    if (filtros.tipoOportunidade === 'jovem_aprendiz') {
+      const hoje = new Date();
+      const dataMax = new Date(hoje.getFullYear() - 14, hoje.getMonth(), hoje.getDate());
+      const dataMin = new Date(hoje.getFullYear() - 25, hoje.getMonth(), hoje.getDate());
+      and.push({
+        OR: [
+          { interesseJovemAprendiz: true },
+          { cargoPretendido: { contains: 'aprendiz', mode: 'insensitive' } },
+          { cargoPretendido: { contains: 'jovem', mode: 'insensitive' } },
+          { cargoPretendido: { contains: 'talento', mode: 'insensitive' } },
+          { experiencias: { some: { cargo: { contains: 'aprendiz', mode: 'insensitive' } } } },
+          {
+            AND: [
+              { dataNascimento: { gte: dataMin, lte: dataMax } },
+              {
+                OR: [
+                  { anosExperienciaTotal: 'sem_experiencia' },
+                  { anosExperienciaTotal: 'ate_1_ano' },
+                  { anosExperienciaTotal: null },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    }
     if (termo && !idsSemanticos) {
       and.push({
         OR: [
@@ -163,7 +189,6 @@ export class EmpresasService {
       where: {
         ativo: true,
         ...(idsSemanticos ? { id: { in: idsSemanticos } } : {}),
-        ...(filtros.tipoOportunidade === 'jovem_aprendiz' ? { interesseJovemAprendiz: true } : {}),
         ...(filtros.area ? { areaPretendida: filtros.area } : {}),
         ...(filtros.regiao ? { regiao: { contains: filtros.regiao.trim(), mode: 'insensitive' } } : {}),
         ...(filtros.uf ? { uf: { equals: filtros.uf.trim(), mode: 'insensitive' } } : {}),
