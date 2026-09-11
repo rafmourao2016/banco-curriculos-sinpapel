@@ -730,25 +730,34 @@ export default function EmpresaPage() {
               )}
 
               {candidatos.map((candidato) => (
-                <article key={candidato.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                <article key={candidato.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                  <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,1.15fr)] lg:items-start">
                     <div className="min-w-0">
-                      <h3 className="text-xl font-semibold">{candidato.nome}</h3>
-                      <p className="mt-1 text-sm text-slate-600">{candidato.cargoPretendido ?? candidato.experiencias[0]?.cargo ?? 'Cargo não informado'} - {candidato.regiao}{candidato.uf ? `/${candidato.uf}` : ''}</p>
+                      <h3 className="text-xl font-semibold text-slate-950">{candidato.nome}</h3>
+                      <p className="mt-1 text-sm font-medium text-slate-600">
+                        {candidato.cargoPretendido ?? candidato.experiencias[0]?.cargo ?? 'Cargo não informado'} - {candidato.regiao}{candidato.uf ? `/${candidato.uf}` : ''}
+                      </p>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {candidato.interesseJovemAprendiz && (
-                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800">
+                          <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200/60">
                             Jovem Aprendiz
                           </span>
                         )}
-                        {candidato.habilidades.map((habilidade) => <span key={habilidade} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">{habilidade}</span>)}
+                        {candidato.habilidades
+                          .flatMap((h) => h.split(/;\s*|,\s*/))
+                          .filter(Boolean)
+                          .map((habilidade, idx) => (
+                            <span key={`${habilidade}-${idx}`} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700 max-w-full break-words">
+                              {habilidade.trim()}
+                            </span>
+                          ))}
                       </div>
                     </div>
-                    <div className="grid gap-2 text-sm text-slate-700 lg:min-w-72">
-                      <p><strong>E-mail:</strong> {candidato.email}</p>
+                    <div className="grid gap-2 text-sm text-slate-700 min-w-0">
+                      <p className="break-words"><strong>E-mail:</strong> {candidato.email}</p>
                       <p><strong>Telefone:</strong> {candidato.telefone}</p>
                       {(candidato.logradouro || candidato.bairro || candidato.numeroEndereco || candidato.cep) && (
-                        <p>
+                        <p className="break-words">
                           <strong>Endereço:</strong>{' '}
                           {[
                             candidato.logradouro,
@@ -763,8 +772,8 @@ export default function EmpresaPage() {
                       )}
                       <p><strong>CNH:</strong> {candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Não'}</p>
                       <p><strong>Status:</strong> {candidato.statusEmpresa ? rotulo(candidato.statusEmpresa) : 'Sem status'}</p>
-                      {candidato.comentarioEmpresa && <p><strong>Comentário:</strong> {candidato.comentarioEmpresa}</p>}
-                      <div className="grid grid-cols-2 gap-2">
+                      {candidato.comentarioEmpresa && <p className="break-words"><strong>Comentário:</strong> {candidato.comentarioEmpresa}</p>}
+                      <div className="grid grid-cols-2 gap-2 pt-1">
                         {[
                           ['CONTATADO', 'Contatado'],
                           ['EM_PROCESSO_SELETIVO', 'Em processo'],
