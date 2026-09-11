@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Localidade } from '../../components/Localidade';
 import { areaPretendidaOptions, anosExperienciaOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
@@ -53,6 +53,16 @@ export default function CandidatoPage() {
   const [mensagem, setMensagem] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(false);
 
+  function sair() {
+    try {
+      localStorage.removeItem('sinpapel_candidato_token');
+    } catch {
+      // ignore
+    }
+    setToken('');
+    setPerfil(null);
+  }
+
   async function carregarPerfil(accessToken: string) {
     const res = await fetch(`${API_URL}/candidatos/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
@@ -60,6 +70,25 @@ export default function CandidatoPage() {
     if (!res.ok) throw new Error('Não foi possível carregar seu currículo.');
     setPerfil(await res.json());
   }
+
+  useEffect(() => {
+    try {
+      const savedToken = localStorage.getItem('sinpapel_candidato_token');
+      if (savedToken) {
+        setToken(savedToken);
+        setCarregando(true);
+        void carregarPerfil(savedToken)
+          .catch(() => {
+            sair();
+          })
+          .finally(() => {
+            setCarregando(false);
+          });
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
 
   async function solicitarRecuperacao() {
     setErro(null);
@@ -111,6 +140,11 @@ export default function CandidatoPage() {
       if (!res.ok) throw new Error('E-mail ou senha inválidos.');
       const data = await res.json();
       setToken(data.accessToken);
+      try {
+        localStorage.setItem('sinpapel_candidato_token', data.accessToken);
+      } catch {
+        // ignore
+      }
       await carregarPerfil(data.accessToken);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -232,8 +266,7 @@ export default function CandidatoPage() {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error('Não foi possível excluir o currículo.');
-      setPerfil(null);
-      setToken('');
+      sair();
       setMensagem('Currículo excluído com sucesso.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
@@ -297,7 +330,8 @@ export default function CandidatoPage() {
               <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-2">
                 <button type="button" onClick={confirmar} disabled={carregando} className="min-w-0 rounded-lg bg-singreen px-4 py-3 text-sm font-semibold text-white">Confirmar disponibilidade</button>
                 <button type="button" onClick={baixarPdf} disabled={carregando} className="min-w-0 rounded-lg border border-brand-600 px-4 py-3 text-sm font-semibold text-brand-700">Baixar PDF</button>
-                <button type="button" onClick={excluir} disabled={carregando} className="min-w-0 rounded-lg border border-sinred px-4 py-3 text-sm font-semibold text-sinred sm:col-span-2">Excluir currículo</button>
+                <button type="button" onClick={excluir} disabled={carregando} className="min-w-0 rounded-lg border border-sinred px-4 py-3 text-sm font-semibold text-sinred">Excluir currículo</button>
+                <button type="button" onClick={sair} className="min-w-0 rounded-lg border border-slate-300 px-4 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">Sair da conta</button>
               </div>
             </div>
 

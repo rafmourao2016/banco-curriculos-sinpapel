@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 
 type Experiencia = {
@@ -147,6 +147,56 @@ export default function AdminPage() {
 
   const totalAtivos = useMemo(() => candidatos.filter((candidato) => candidato.ativo).length, [candidatos]);
 
+  function sairPainel() {
+    try {
+      localStorage.removeItem('sinpapel_admin_token');
+    } catch {
+      // ignore
+    }
+    setAutenticado(false);
+    setToken('');
+    setBusca('');
+    setCandidatos([]);
+    setEmpresas([]);
+    setEmailsEmpresas({});
+    setLogs([]);
+    setIndicadores(null);
+    setErro(null);
+    setMensagem(null);
+    setConsultado(false);
+  }
+
+  async function carregarPainelComToken(adminToken: string) {
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/admin/indicadores?meses=12`, { headers: { 'x-admin-token': adminToken } });
+      if (!res.ok) throw new Error('Chave administrativa inválida.');
+      setIndicadores(await res.json());
+      setAutenticado(true);
+      try {
+        localStorage.setItem('sinpapel_admin_token', adminToken);
+      } catch {
+        // ignore
+      }
+    } catch {
+      sairPainel();
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  useEffect(() => {
+    try {
+      const savedToken = localStorage.getItem('sinpapel_admin_token');
+      if (savedToken) {
+        setToken(savedToken);
+        void carregarPainelComToken(savedToken);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   async function acessarPainel(event: FormEvent) {
     event.preventDefault();
     setErro(null);
@@ -163,25 +213,16 @@ export default function AdminPage() {
       if (!res.ok) throw new Error('Chave administrativa inválida.');
       setIndicadores(await res.json());
       setAutenticado(true);
+      try {
+        localStorage.setItem('sinpapel_admin_token', token);
+      } catch {
+        // ignore
+      }
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
       setCarregando(false);
     }
-  }
-
-  function sairPainel() {
-    setAutenticado(false);
-    setToken('');
-    setBusca('');
-    setCandidatos([]);
-    setEmpresas([]);
-    setEmailsEmpresas({});
-    setLogs([]);
-    setIndicadores(null);
-    setErro(null);
-    setMensagem(null);
-    setConsultado(false);
   }
 
   async function carregarCandidatos(event?: FormEvent) {

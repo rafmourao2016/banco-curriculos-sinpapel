@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
@@ -127,6 +127,34 @@ export default function EmpresaPage() {
   const [candidatos, setCandidatos] = useState<CandidatoEmpresa[]>([]);
   const [vagas, setVagas] = useState<Vaga[]>([]);
 
+  function sair() {
+    setToken('');
+    setEmpresaNome('');
+    setCandidatos([]);
+    setBuscaRealizada(false);
+    try {
+      localStorage.removeItem('sinpapel_empresa_token');
+      localStorage.removeItem('sinpapel_empresa_nome');
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    try {
+      const savedToken = localStorage.getItem('sinpapel_empresa_token');
+      const savedNome = localStorage.getItem('sinpapel_empresa_nome');
+      if (savedToken) {
+        setToken(savedToken);
+        if (savedNome) setEmpresaNome(savedNome);
+        void carregarVagas(savedToken);
+        void carregarStatus2fa(savedToken);
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   async function cadastrarEmpresa(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro(null);
@@ -233,7 +261,14 @@ export default function EmpresaPage() {
         return;
       }
       setToken(data.accessToken);
-      setEmpresaNome(data.empresa?.razaoSocial ?? 'Empresa');
+      const nome = data.empresa?.razaoSocial ?? 'Empresa';
+      setEmpresaNome(nome);
+      try {
+        localStorage.setItem('sinpapel_empresa_token', data.accessToken);
+        localStorage.setItem('sinpapel_empresa_nome', nome);
+      } catch {
+        // ignore
+      }
       await carregarVagas(data.accessToken);
       await carregarStatus2fa(data.accessToken);
       setCodigo2fa('');
@@ -606,7 +641,7 @@ export default function EmpresaPage() {
                   <p className="text-sm text-slate-500">Empresa conectada</p>
                   <h2 className="text-2xl font-semibold">{empresaNome}</h2>
                 </div>
-                <button onClick={() => { setToken(''); setCandidatos([]); }} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
+                <button onClick={sair} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700">
                   Sair
                 </button>
               </div>
