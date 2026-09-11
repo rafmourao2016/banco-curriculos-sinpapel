@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Header, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { StatusCandidatura } from '@prisma/client';
 import { Response } from 'express';
 import { EmpresasService } from './empresas.service';
@@ -70,6 +70,12 @@ export class EmpresasController {
   @Get('vagas')
   listarVagas(@Req() req: any) {
     return this.empresasService.listarVagas(req.empresaId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('vagas/:id')
+  excluirVaga(@Req() req: any, @Param('id') vagaId: string) {
+    return this.empresasService.excluirVaga(req.empresaId, vagaId);
   }
 
   @UseGuards(JwtAuthGuard)

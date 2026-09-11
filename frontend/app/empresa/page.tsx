@@ -365,10 +365,11 @@ export default function EmpresaPage() {
 
   async function criarVaga(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const formElement = event.currentTarget;
     setErro(null);
     setMensagem(null);
     setCarregando(true);
-    const form = new FormData(event.currentTarget);
+    const form = new FormData(formElement);
     try {
       const res = await fetch(`${API_URL}/empresas/vagas`, {
         method: 'POST',
@@ -379,9 +380,32 @@ export default function EmpresaPage() {
         }),
       });
       if (!res.ok) throw new Error('Não foi possível cadastrar a necessidade.');
-      event.currentTarget.reset();
+      formElement.reset();
       await carregarVagas();
       setMensagem('Necessidade cadastrada. Alertas reversos foram registrados para candidatos compatíveis.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
+  async function excluirVaga(vagaId: string) {
+    if (!confirm('Deseja realmente apagar esta necessidade?')) return;
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/empresas/vagas/${vagaId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Não foi possível apagar a necessidade.');
+      }
+      setVagas((atuais) => atuais.filter((v) => v.id !== vagaId));
+      setMensagem('Necessidade removida com sucesso.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -701,9 +725,20 @@ export default function EmpresaPage() {
               <div className="grid content-start gap-2">
                 <h3 className="text-lg font-semibold">Necessidades cadastradas</h3>
                 {vagas.map((vaga) => (
-                  <div key={vaga.id} className="rounded-lg border border-slate-200 p-3 text-sm">
-                    <p className="font-semibold">{rotulo(vaga.area)}</p>
-                    <p className="mt-1 text-slate-600">{vaga.requisitos}</p>
+                  <div key={vaga.id} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm">
+                    <div className="min-w-0">
+                      <p className="font-semibold">{rotulo(vaga.area)}</p>
+                      <p className="mt-1 text-slate-600 break-words">{vaga.requisitos}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => excluirVaga(vaga.id)}
+                      disabled={carregando}
+                      title="Apagar necessidade"
+                      className="shrink-0 rounded-md border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      Apagar
+                    </button>
                   </div>
                 ))}
                 {vagas.length === 0 && <p className="text-sm text-slate-600">Nenhuma necessidade cadastrada.</p>}

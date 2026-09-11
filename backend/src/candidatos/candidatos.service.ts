@@ -129,15 +129,6 @@ export class CandidatosService {
             ip,
           },
         },
-        habilidades: {
-          create: habilidades.map((h) => ({ habilidadeId: h.id })),
-        },
-        termoConsentimento: {
-          create: {
-            versao: '1.0',
-            ip,
-          },
-        },
       },
       include: { experiencias: true, formacoes: true, habilidades: true },
     });

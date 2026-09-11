@@ -384,6 +384,16 @@ export class EmpresasService {
     });
   }
 
+  async excluirVaga(empresaId: string, vagaId: string) {
+    await this.validarEmpresa(empresaId);
+    const vaga = await this.prisma.vagaNecessidade.findFirst({
+      where: { id: vagaId, empresaId },
+    });
+    if (!vaga) throw new NotFoundException('Necessidade nao encontrada.');
+    await this.prisma.vagaNecessidade.delete({ where: { id: vagaId } });
+    return { ok: true };
+  }
+
   async gerarPdfCandidato(empresaId: string, candidatoId: string) {
     await this.validarEmpresa(empresaId);
     const candidato = await this.prisma.candidato.findFirst({
