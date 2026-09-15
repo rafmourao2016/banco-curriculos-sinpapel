@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
@@ -126,12 +126,26 @@ export default function EmpresaPage() {
   const [baixandoPdfId, setBaixandoPdfId] = useState<string | null>(null);
   const [candidatos, setCandidatos] = useState<CandidatoEmpresa[]>([]);
   const [vagas, setVagas] = useState<Vaga[]>([]);
+  const formBuscaRef = useRef<HTMLFormElement>(null);
+  const [formResetKey, setFormResetKey] = useState(0);
+
+  function limparFiltros() {
+    if (formBuscaRef.current) {
+      formBuscaRef.current.reset();
+    }
+    setFormResetKey((prev) => prev + 1);
+    setCandidatos([]);
+    setBuscaRealizada(false);
+    setErro(null);
+    setMensagem(null);
+  }
 
   function sair() {
     setToken('');
     setEmpresaNome('');
     setCandidatos([]);
     setBuscaRealizada(false);
+    setFormResetKey((prev) => prev + 1);
     try {
       localStorage.removeItem('sinpapel_empresa_token');
       localStorage.removeItem('sinpapel_empresa_nome');
@@ -747,13 +761,13 @@ export default function EmpresaPage() {
 
             <ContadorCurriculos token={token} />
 
-            <form onSubmit={buscar} className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:grid-cols-2 lg:grid-cols-6">
+            <form ref={formBuscaRef} onSubmit={buscar} className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 sm:grid-cols-2 lg:grid-cols-6">
               <input name="q" className={inputClasses} placeholder="Nome, cargo ou habilidade" />
               <select name="tipoOportunidade" className={inputClasses} defaultValue="">
                 <option value="">Todos os perfis</option>
                 <option value="jovem_aprendiz">Jovem Aprendiz</option>
               </select>
-              <Localidade filtro className={inputClasses} />
+              <Localidade key={formResetKey} filtro className={inputClasses} />
               <select name="area" className={inputClasses} defaultValue="">
                 <option value="">Todas as áreas</option>
                 {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -787,9 +801,23 @@ export default function EmpresaPage() {
                 <input name="semantica" type="checkbox" value="1" className="h-5 w-5" />
                 Usar busca semântica
               </label>
-              <button disabled={buscandoCandidatos} className="rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white disabled:opacity-60 sm:col-span-2 lg:col-span-6">
-                {buscandoCandidatos ? 'Buscando...' : 'Buscar candidatos'}
-              </button>
+              <div className="flex flex-col gap-2 sm:flex-row sm:col-span-2 lg:col-span-6">
+                <button
+                  type="submit"
+                  disabled={buscandoCandidatos}
+                  className="flex-1 rounded-lg bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:opacity-60"
+                >
+                  {buscandoCandidatos ? 'Buscando...' : 'Buscar candidatos'}
+                </button>
+                <button
+                  type="button"
+                  onClick={limparFiltros}
+                  disabled={buscandoCandidatos}
+                  className="rounded-lg border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:text-brand-700 disabled:opacity-60"
+                >
+                  Limpar filtros
+                </button>
+              </div>
             </form>
 
             <div className="grid gap-3">
