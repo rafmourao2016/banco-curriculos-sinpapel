@@ -41,8 +41,43 @@ type CurriculoPdf = {
   habilidades: Array<{ habilidade?: { nome: string } } | string>;
 };
 
+const rotulosPdf: Record<string, string> = {
+  a_combinar: 'A combinar',
+  ate_1500: 'Até R$ 1.500',
+  '1501_2500': 'R$ 1.501 a R$ 2.500',
+  '2501_3500': 'R$ 2.501 a R$ 3.500',
+  '3501_5000': 'R$ 3.501 a R$ 5.000',
+  acima_5000: 'Acima de R$ 5.000',
+  sem_experiencia: 'Sem experiência',
+  ate_1_ano: 'Até 1 ano',
+  '1_3_anos': '1 a 3 anos',
+  '3_5_anos': '3 a 5 anos',
+  mais_5_anos: 'Mais de 5 anos',
+  manha: 'Manhã',
+  tarde: 'Tarde',
+  noite: 'Noite',
+  revezamento: 'Revezamento',
+  producao: 'Produção',
+  manutencao: 'Manutenção',
+  administrativo: 'Administrativo',
+  logistica: 'Logística',
+  qualidade: 'Qualidade',
+  comercial: 'Comercial',
+  ti: 'TI',
+  engenharia: 'Engenharia',
+  outra: 'Outra',
+  FUNDAMENTAL_INCOMPLETO: 'Fundamental incompleto',
+  FUNDAMENTAL_COMPLETO: 'Fundamental completo',
+  MEDIO_INCOMPLETO: 'Médio incompleto',
+  MEDIO_COMPLETO: 'Médio completo',
+  SUPERIOR_INCOMPLETO: 'Superior incompleto',
+  SUPERIOR_COMPLETO: 'Superior completo',
+  POS_GRADUACAO: 'Pós-graduação',
+};
+
 function normalizar(valor?: string | null) {
-  return texto(valor?.replaceAll('_', ' ')) || 'Não informado';
+  if (!valor) return 'Não informado';
+  return rotulosPdf[valor] ?? (texto(valor.replaceAll('_', ' ')) || 'Não informado');
 }
 
 function texto(valor?: unknown) {

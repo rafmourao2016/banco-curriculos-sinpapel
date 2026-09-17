@@ -24,6 +24,7 @@ export const areaPretendidaOptions = [
 ] as const;
 
 export const pretensaoSalarialOptions = [
+  { value: 'a_combinar', label: 'A combinar' },
   { value: 'ate_1500', label: 'Até R$ 1.500' },
   { value: '1501_2500', label: 'R$ 1.501 a R$ 2.500' },
   { value: '2501_3500', label: 'R$ 2.501 a R$ 3.500' },
@@ -113,7 +114,7 @@ export const cadastroSchema = z.object({
   areaPretendida: z.enum(['producao', 'manutencao', 'administrativo', 'logistica', 'qualidade', 'comercial', 'ti', 'engenharia', 'outra']),
   cargoPretendido: z.string().min(2, 'Informe o cargo pretendido'),
   interesseJovemAprendiz: z.boolean(),
-  pretensaoSalarial: z.enum(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000']),
+  pretensaoSalarial: z.enum(['a_combinar', 'ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000']),
   experienciaSetorPapel: z.boolean(),
   anosExperienciaTotal: z.enum(['sem_experiencia', 'ate_1_ano', '1_3_anos', '3_5_anos', 'mais_5_anos']),
   turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),

@@ -100,6 +100,7 @@ const rotulos: Record<string, string> = {
   ti: 'TI',
   engenharia: 'Engenharia',
   outra: 'Outra',
+  a_combinar: 'A combinar',
   ate_1500: 'Até R$ 1.500',
   '1501_2500': 'R$ 1.501 a R$ 2.500',
   '2501_3500': 'R$ 2.501 a R$ 3.500',

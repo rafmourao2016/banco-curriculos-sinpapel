@@ -11,6 +11,12 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const inputClasses = 'w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10';
 
 const rotulos: Record<string, string> = {
+  a_combinar: 'A combinar',
+  ate_1500: 'Até R$ 1.500',
+  '1501_2500': 'R$ 1.501 a R$ 2.500',
+  '2501_3500': 'R$ 2.501 a R$ 3.500',
+  '3501_5000': 'R$ 3.501 a R$ 5.000',
+  acima_5000: 'Acima de R$ 5.000',
   producao: 'Produção',
   manutencao: 'Manutenção',
   administrativo: 'Administrativo',
