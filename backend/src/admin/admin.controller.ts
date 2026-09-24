@@ -335,7 +335,17 @@ export class AdminController {
     inicio.setDate(1);
     inicio.setHours(0, 0, 0, 0);
 
-    const [totalCandidatos, ativos, inativos, totalEmpresas, empresasAprovadas, revalidacoes, rankingUso, contratacoesPorPeriodo] = await Promise.all([
+    const [
+      totalCandidatos,
+      ativos,
+      inativos,
+      totalEmpresas,
+      empresasAprovadas,
+      revalidacoes,
+      rankingUso,
+      contratacoesPorPeriodo,
+      candidatosPorCidadeRaw,
+    ] = await Promise.all([
       this.prisma.candidato.count(),
       this.prisma.candidato.count({ where: { ativo: true } }),
       this.prisma.candidato.count({ where: { ativo: false } }),
@@ -360,6 +370,12 @@ export class AdminController {
         group by 1
         order by 1 desc
       `,
+      this.prisma.candidato.groupBy({
+        by: ['regiao', 'uf'],
+        where: { ativo: true },
+        _count: { _all: true },
+        orderBy: { _count: { regiao: 'desc' } },
+      }),
     ]);
 
     const empresasRanking = rankingUso.length
@@ -374,6 +390,24 @@ export class AdminController {
       .filter((item) => item.statusEnvio === 'confirmado')
       .reduce((soma, item) => soma + item._count._all, 0);
 
+    // Agrupar distribuição por cidade de forma normalizada
+    const cidadesMap = new Map<string, { cidade: string; uf?: string | null; total: number }>();
+    for (const item of candidatosPorCidadeRaw) {
+      const cidadeFormatada = (item.regiao || 'Não informada').trim();
+      const chave = cidadeFormatada.toLowerCase();
+      const existente = cidadesMap.get(chave);
+      if (existente) {
+        existente.total += item._count._all;
+      } else {
+        cidadesMap.set(chave, {
+          cidade: cidadeFormatada,
+          uf: item.uf?.trim() || null,
+          total: item._count._all,
+        });
+      }
+    }
+    const curriculosAtivosPorCidade = Array.from(cidadesMap.values()).sort((a, b) => b.total - a.total);
+
     return {
       periodoMeses: mesesNumero,
       atualizadoEm: new Date().toISOString(),
@@ -387,6 +421,7 @@ export class AdminController {
         revalidacoesConfirmadas,
         taxaRevalidacao: revalidacoesTotal > 0 ? Number(((revalidacoesConfirmadas / revalidacoesTotal) * 100).toFixed(1)) : 0,
       },
+      curriculosAtivosPorCidade,
       rankingUsoEmpresas: rankingUso.map((item) => {
         const empresa = empresasPorId.get(item.empresaId);
         return {
@@ -439,6 +474,19 @@ ${sheet('Resumo Executivo', [
   row(['Revalidações enviadas/registradas', indicadores.resumo.revalidacoesTotal]),
   row(['Revalidações confirmadas', indicadores.resumo.revalidacoesConfirmadas]),
   row(['Taxa de revalidação (%)', indicadores.resumo.taxaRevalidacao]),
+])}
+${sheet('Distribuição por Cidade', [
+  row(['Cidade', 'UF', 'Currículos Ativos', '% do Total de Ativos']),
+  ...(indicadores.curriculosAtivosPorCidade ?? []).map((item) =>
+    row([
+      item.cidade,
+      item.uf ?? '',
+      item.total,
+      indicadores.resumo.ativos > 0
+        ? `${((item.total / indicadores.resumo.ativos) * 100).toFixed(1)}%`
+        : '0%',
+    ]),
+  ),
 ])}
 ${sheet('Empresas Detalhadas', [
   row(['Razão Social', 'CNPJ', 'E-mail', 'Status Aprovação', 'Data Cadastro']),

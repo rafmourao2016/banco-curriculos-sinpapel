@@ -66,6 +66,12 @@ type LogAcesso = {
   candidato: { id?: string; nome: string; email: string; telefone?: string; cargoPretendido?: string; regiao?: string; uf?: string };
 };
 
+type DistribuicaoCidade = {
+  cidade: string;
+  uf?: string | null;
+  total: number;
+};
+
 type Indicadores = {
   periodoMeses: number;
   resumo: {
@@ -78,6 +84,7 @@ type Indicadores = {
     revalidacoesConfirmadas: number;
     taxaRevalidacao: number;
   };
+  curriculosAtivosPorCidade?: DistribuicaoCidade[];
   rankingUsoEmpresas: Array<{ empresaId: string; razaoSocial: string; email: string; visualizacoes: number }>;
   contratacoesPorPeriodo: Array<{ periodo: string; total: number }>;
 };
@@ -164,6 +171,11 @@ export default function AdminPage() {
   const [buscaLogs, setBuscaLogs] = useState('');
   const [modoLogs, setModoLogs] = useState<'segmentado' | 'timeline'>('segmentado');
   const [empresaSelecionadaLogsId, setEmpresaSelecionadaLogsId] = useState<string | null>(null);
+
+  // Distribuição de candidatos por cidade
+  const [modalDistribuicaoAberta, setModalDistribuicaoAberta] = useState(false);
+  const [buscaDistribuicaoCidade, setBuscaDistribuicaoCidade] = useState('');
+  const [copiadoResumo, setCopiadoResumo] = useState(false);
 
   const secaoCandidatosRef = useRef<HTMLElement>(null);
   const secaoEmpresasRef = useRef<HTMLElement>(null);
@@ -535,6 +547,58 @@ export default function AdminPage() {
     secaoLogsRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
+  // Distribuição de candidatos ativos por cidade (Backend ou agrupamento local em tempo real)
+  const distribuicaoCidades = useMemo(() => {
+    if (indicadores?.curriculosAtivosPorCidade && indicadores.curriculosAtivosPorCidade.length > 0) {
+      return indicadores.curriculosAtivosPorCidade;
+    }
+    const mapa = new Map<string, { cidade: string; uf?: string | null; total: number }>();
+    candidatos
+      .filter((c) => c.ativo)
+      .forEach((c) => {
+        const cidadeFormatada = (c.regiao || 'Não informada').trim();
+        const chave = cidadeFormatada.toLowerCase();
+        const existente = mapa.get(chave);
+        if (existente) {
+          existente.total += 1;
+        } else {
+          mapa.set(chave, { cidade: cidadeFormatada, uf: c.uf || null, total: 1 });
+        }
+      });
+    return Array.from(mapa.values()).sort((a, b) => b.total - a.total);
+  }, [indicadores, candidatos]);
+
+  const distribuicaoCidadesFiltradas = useMemo(() => {
+    if (!buscaDistribuicaoCidade.trim()) return distribuicaoCidades;
+    const termo = buscaDistribuicaoCidade.trim().toLowerCase();
+    return distribuicaoCidades.filter((item) =>
+      `${item.cidade} ${item.uf ?? ''}`.toLowerCase().includes(termo)
+    );
+  }, [distribuicaoCidades, buscaDistribuicaoCidade]);
+
+  async function copiarResumoCidades() {
+    if (distribuicaoCidades.length === 0) return;
+    const linhas = distribuicaoCidades.map((item) => `${item.cidade} ${item.total}`);
+    const texto = `DISTRIBUIÇÃO DE CURRÍCULOS ATIVOS POR CIDADE:\n${linhas.join('\n')}`;
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiadoResumo(true);
+      setTimeout(() => setCopiadoResumo(false), 2500);
+    } catch {
+      // fallback
+    }
+  }
+
+  function filtrarPorCidade(cidadeNome: string) {
+    setModalDistribuicaoAberta(false);
+    setFiltroStatusCandidato('ativos');
+    setBusca(cidadeNome);
+    if (candidatos.length === 0) {
+      void carregarCandidatos();
+    }
+    secaoCandidatosRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }
+
   // Candidatos filtrados por busca local e status
   const candidatosExibidos = useMemo(() => {
     return candidatos.filter((c) => {
@@ -739,17 +803,46 @@ export default function AdminPage() {
               {/* Cards clicáveis de métricas */}
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                 {/* Ativos */}
-                <button
-                  type="button"
-                  onClick={() => selecionarFiltroCandidatos('ativos')}
+                <div
                   className={`group flex flex-col justify-between rounded-xl border p-4 text-left transition hover:border-emerald-600 hover:shadow-md ${filtroStatusCandidato === 'ativos' ? 'border-emerald-600 bg-emerald-50 ring-2 ring-emerald-600/20' : 'border-slate-200 bg-slate-50'}`}
                 >
-                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Currículos Ativos</p>
-                  <p className="mt-2 text-3xl font-extrabold text-emerald-700">{indicadores.resumo.ativos}</p>
-                  <span className="mt-2 text-xs font-semibold text-emerald-800 underline underline-offset-2 group-hover:text-emerald-900">
-                    Ver na tabela &darr;
-                  </span>
-                </button>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-wider text-emerald-800">Currículos Ativos</p>
+                      <button
+                        type="button"
+                        onClick={() => setModalDistribuicaoAberta(true)}
+                        title="Ver relação quantitativa de currículos por cidade"
+                        className="rounded bg-emerald-100/90 px-2 py-0.5 text-[11px] font-bold text-emerald-800 transition hover:bg-emerald-200"
+                      >
+                        Por Cidade 📍
+                      </button>
+                    </div>
+                    <p className="mt-2 text-3xl font-extrabold text-emerald-700">{indicadores.resumo.ativos}</p>
+                    {distribuicaoCidades.length > 0 && (
+                      <p className="mt-1 text-xs font-medium text-emerald-800 truncate" title={distribuicaoCidades.map((d) => `${d.cidade} ${d.total}`).join(', ')}>
+                        {distribuicaoCidades.slice(0, 2).map((d) => `${d.cidade} ${d.total}`).join(' • ')}
+                        {distribuicaoCidades.length > 2 ? '...' : ''}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-3 flex items-center justify-between border-t border-emerald-200/60 pt-2 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => selecionarFiltroCandidatos('ativos')}
+                      className="font-semibold text-emerald-800 underline underline-offset-2 hover:text-emerald-950"
+                    >
+                      Ver na tabela &darr;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setModalDistribuicaoAberta(true)}
+                      className="font-bold text-emerald-800 hover:underline"
+                    >
+                      Cidades ({distribuicaoCidades.length}) &rarr;
+                    </button>
+                  </div>
+                </div>
 
                 {/* Inativos */}
                 <button
@@ -803,55 +896,136 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              {/* Ranking e Contratações */}
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-slate-900">Ranking de uso por empresa</h3>
-                    <button
-                      type="button"
-                      onClick={() => navegarParaLogsEmpresa()}
-                      className="text-xs font-semibold text-brand-700 hover:underline"
-                    >
-                      Ver logs detalhados &rarr;
-                    </button>
-                  </div>
-                  <div className="mt-3 grid gap-2">
-                    {indicadores.rankingUsoEmpresas.map((item) => (
+              {/* Distribuição Regional, Ranking e Contratações */}
+              <div className="grid gap-4 lg:grid-cols-3">
+                {/* 1. Distribuição de Currículos Ativos por Cidade */}
+                <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between shadow-xs">
+                  <div>
+                    <div className="flex items-center justify-between gap-2 border-b border-slate-100 pb-3">
+                      <div>
+                        <h3 className="font-semibold text-slate-900 flex items-center gap-1.5 text-sm sm:text-base">
+                          <span>📍</span> Distribuição por Cidade
+                        </h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Volume de currículos ativos</p>
+                      </div>
                       <button
-                        key={item.empresaId}
                         type="button"
-                        onClick={() => navegarParaLogsEmpresa(item.empresaId)}
-                        className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-left text-sm transition hover:bg-brand-50"
+                        onClick={() => setModalDistribuicaoAberta(true)}
+                        className="text-xs font-semibold text-brand-700 hover:underline shrink-0"
                       >
-                        <div className="min-w-0">
-                          <p className="truncate font-semibold text-slate-900">{item.razaoSocial}</p>
-                          <p className="truncate text-xs text-slate-500">{item.email}</p>
-                        </div>
-                        <div className="text-right shrink-0">
-                          <strong className="text-brand-700">{item.visualizacoes}</strong>
-                          <span className="ml-1 text-xs text-slate-500">acessos</span>
-                        </div>
+                        Ver todas ({distribuicaoCidades.length}) &rarr;
                       </button>
-                    ))}
-                    {indicadores.rankingUsoEmpresas.length === 0 && (
-                      <p className="text-sm text-slate-600">Sem visualizações no período.</p>
-                    )}
+                    </div>
+
+                    <div className="mt-3 grid gap-2">
+                      {distribuicaoCidades.slice(0, 5).map((item, idx) => {
+                        const totalAtiv = indicadores.resumo.ativos > 0 ? indicadores.resumo.ativos : totalAtivos;
+                        const percentual = totalAtiv > 0 ? Math.round((item.total / totalAtiv) * 100) : 0;
+                        return (
+                          <button
+                            key={`${item.cidade}-${idx}`}
+                            type="button"
+                            onClick={() => filtrarPorCidade(item.cidade)}
+                            title={`Clique para filtrar candidatos de ${item.cidade}`}
+                            className="group flex flex-col gap-1 rounded-lg bg-slate-50 p-2.5 text-left text-sm transition hover:bg-emerald-50 hover:border-emerald-300 border border-transparent"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold text-slate-800 group-hover:text-emerald-900 truncate">
+                                {item.cidade}{item.uf ? `/${item.uf}` : ''}
+                              </span>
+                              <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                                <span className="font-bold text-emerald-700 text-sm sm:text-base">{item.total}</span>
+                                <span className="text-[11px] text-slate-500">({percentual}%)</span>
+                              </div>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
+                              <div
+                                className="h-full rounded-full bg-emerald-600 transition-all duration-300"
+                                style={{ width: `${Math.max(percentual, 4)}%` }}
+                              />
+                            </div>
+                          </button>
+                        );
+                      })}
+                      {distribuicaoCidades.length === 0 && (
+                        <p className="text-sm text-slate-500 py-3 text-center">Nenhum currículo ativo com cidade informada.</p>
+                      )}
+                    </div>
+                  </div>
+
+                  {distribuicaoCidades.length > 0 && (
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5 text-xs">
+                      <span className="text-slate-500">{distribuicaoCidades.length} cidades registradas</span>
+                      <button
+                        type="button"
+                        onClick={copiarResumoCidades}
+                        className="font-semibold text-brand-700 hover:underline"
+                      >
+                        {copiadoResumo ? '✓ Lista copiada!' : 'Copiar resumo (Texto)'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {/* 2. Ranking de uso por empresa */}
+                <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between shadow-xs">
+                  <div>
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                      <div>
+                        <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Ranking de empresas</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">Mais acessos a currículos</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => navegarParaLogsEmpresa()}
+                        className="text-xs font-semibold text-brand-700 hover:underline"
+                      >
+                        Ver logs &rarr;
+                      </button>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      {indicadores.rankingUsoEmpresas.slice(0, 5).map((item) => (
+                        <button
+                          key={item.empresaId}
+                          type="button"
+                          onClick={() => navegarParaLogsEmpresa(item.empresaId)}
+                          className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-2.5 text-left text-sm transition hover:bg-brand-50"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-semibold text-slate-900">{item.razaoSocial}</p>
+                            <p className="truncate text-xs text-slate-500">{item.email}</p>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <strong className="text-brand-700">{item.visualizacoes}</strong>
+                            <span className="ml-1 text-xs text-slate-500">acessos</span>
+                          </div>
+                        </button>
+                      ))}
+                      {indicadores.rankingUsoEmpresas.length === 0 && (
+                        <p className="text-sm text-slate-600 py-3 text-center">Sem visualizações no período.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="rounded-xl border border-slate-200 p-4">
-                  <h3 className="font-semibold text-slate-900">Contratações confirmadas</h3>
-                  <div className="mt-3 grid gap-2">
-                    {indicadores.contratacoesPorPeriodo.map((item) => (
-                      <div key={item.periodo} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-3 text-sm">
-                        <span>{formatarDataSimples(item.periodo)}</span>
-                        <strong className="text-singreen">{item.total} contratações</strong>
-                      </div>
-                    ))}
-                    {indicadores.contratacoesPorPeriodo.length === 0 && (
-                      <p className="text-sm text-slate-600">Sem contratações registradas no período.</p>
-                    )}
+                {/* 3. Contratações confirmadas */}
+                <div className="rounded-xl border border-slate-200 bg-white p-4 flex flex-col justify-between shadow-xs">
+                  <div>
+                    <div className="border-b border-slate-100 pb-3">
+                      <h3 className="font-semibold text-slate-900 text-sm sm:text-base">Contratações confirmadas</h3>
+                      <p className="text-xs text-slate-500 mt-0.5">Admissões no período</p>
+                    </div>
+                    <div className="mt-3 grid gap-2">
+                      {indicadores.contratacoesPorPeriodo.slice(0, 5).map((item) => (
+                        <div key={item.periodo} className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 p-2.5 text-sm">
+                          <span className="text-slate-700">{formatarDataSimples(item.periodo)}</span>
+                          <strong className="text-singreen">{item.total} contratações</strong>
+                        </div>
+                      ))}
+                      {indicadores.contratacoesPorPeriodo.length === 0 && (
+                        <p className="text-sm text-slate-600 py-3 text-center">Sem contratações registradas no período.</p>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1420,6 +1594,147 @@ export default function AdminPage() {
             </div>
           </div>
         </section>
+
+        {/* Modal de Distribuição Regional de Currículos Ativos */}
+        {modalDistribuicaoAberta && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-4 backdrop-blur-xs"
+            onClick={() => setModalDistribuicaoAberta(false)}
+          >
+            <div
+              className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-5 py-4 sm:px-6">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-950 flex items-center gap-2">
+                    <span>📍</span> Distribuição de Currículos Ativos por Cidade
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Relação quantitativa de candidatos ativos agrupados por município.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalDistribuicaoAberta(false)}
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                  aria-label="Fechar"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Badges and Filter */}
+              <div className="border-b border-slate-200 px-5 py-3 sm:px-6 bg-white flex flex-col sm:flex-row gap-3 items-center justify-between">
+                <div className="flex flex-wrap items-center gap-2 text-xs w-full sm:w-auto">
+                  <span className="rounded-md bg-emerald-50 border border-emerald-200 px-2.5 py-1 font-semibold text-emerald-800">
+                    Total Ativos: <strong>{indicadores?.resumo.ativos ?? totalAtivos}</strong>
+                  </span>
+                  <span className="rounded-md bg-slate-100 border border-slate-200 px-2.5 py-1 font-semibold text-slate-800">
+                    Cidades: <strong>{distribuicaoCidades.length}</strong>
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 w-full sm:w-auto">
+                  <input
+                    type="text"
+                    placeholder="Filtrar cidade..."
+                    value={buscaDistribuicaoCidade}
+                    onChange={(e) => setBuscaDistribuicaoCidade(e.target.value)}
+                    className="w-full sm:w-48 rounded-lg border border-slate-300 px-3 py-1.5 text-xs outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/10"
+                  />
+                  <button
+                    type="button"
+                    onClick={copiarResumoCidades}
+                    title="Copiar lista resumida no formato 'Belo Horizonte 15, Contagem 7...'"
+                    className="shrink-0 rounded-lg border border-brand-600 bg-white px-3 py-1.5 text-xs font-semibold text-brand-700 transition hover:bg-brand-50"
+                  >
+                    {copiadoResumo ? '✓ Copiado!' : 'Copiar Lista'}
+                  </button>
+                </div>
+              </div>
+
+              {/* List */}
+              <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-2.5 max-h-[55vh]">
+                {distribuicaoCidadesFiltradas.map((item, index) => {
+                  const totalAtiv = indicadores?.resumo.ativos ?? totalAtivos;
+                  const percentual = totalAtiv > 0 ? Math.round((item.total / totalAtiv) * 100) : 0;
+                  return (
+                    <div
+                      key={`${item.cidade}-${index}`}
+                      className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 transition hover:bg-emerald-50/60 hover:border-emerald-300"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-slate-200 text-xs font-bold text-slate-700">
+                            {index + 1}
+                          </span>
+                          <span className="font-bold text-slate-900 truncate text-sm sm:text-base">
+                            {item.cidade}
+                          </span>
+                          {item.uf && (
+                            <span className="rounded bg-slate-200 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
+                              {item.uf}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                          <div
+                            className="h-full rounded-full bg-emerald-600 transition-all duration-300"
+                            style={{ width: `${Math.max(percentual, 3)}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 shrink-0">
+                        <div className="text-right">
+                          <p className="text-lg sm:text-xl font-extrabold text-emerald-700 leading-none">
+                            {item.total}
+                          </p>
+                          <p className="text-[11px] text-slate-500 mt-1">
+                            {percentual}% dos ativos
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => filtrarPorCidade(item.cidade)}
+                          className="rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700"
+                        >
+                          Ver currículos &rarr;
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {distribuicaoCidadesFiltradas.length === 0 && (
+                  <div className="py-10 text-center text-slate-500">
+                    <p className="text-base font-semibold">Nenhuma cidade encontrada.</p>
+                    <p className="text-xs mt-1">Tente ajustar o termo digitado no filtro de busca.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3 sm:px-6">
+                <p className="text-xs text-slate-500 text-center sm:text-left">
+                  Clique em <strong>Ver currículos</strong> para filtrar a base na cidade selecionada.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setModalDistribuicaoAberta(false)}
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100 w-full sm:w-auto"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
