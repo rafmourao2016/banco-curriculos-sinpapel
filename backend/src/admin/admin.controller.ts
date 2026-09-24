@@ -15,31 +15,68 @@ export class AdminController {
   }
 
   @Get('candidatos')
-  async listarCandidatos(@Headers('x-admin-token') token: string | undefined, @Query('q') busca?: string) {
+  async listarCandidatos(
+    @Headers('x-admin-token') token: string | undefined,
+    @Query('q') busca?: string,
+    @Query('status') status?: string,
+  ) {
     this.validarToken(token);
     const termo = busca?.trim();
+    const apenasNumeros = termo ? termo.replace(/\D/g, '') : '';
+
+    const condicoesWhere: any[] = [];
+
+    if (status === 'ativo' || status === 'ativos') {
+      condicoesWhere.push({ ativo: true });
+    } else if (status === 'inativo' || status === 'inativos') {
+      condicoesWhere.push({ ativo: false });
+    }
+
+    if (termo) {
+      const termosPalavras = termo.split(/\s+/).filter((p) => p.length >= 2);
+      const orBusca: any[] = [
+        { nome: { contains: termo, mode: 'insensitive' } },
+        { email: { contains: termo, mode: 'insensitive' } },
+        { telefone: { contains: termo, mode: 'insensitive' } },
+        { regiao: { contains: termo, mode: 'insensitive' } },
+        { uf: { contains: termo, mode: 'insensitive' } },
+        { areaPretendida: { contains: termo, mode: 'insensitive' } },
+        { cargoPretendido: { contains: termo, mode: 'insensitive' } },
+        { escolaridade: { contains: termo, mode: 'insensitive' } },
+        { pretensaoSalarial: { contains: termo, mode: 'insensitive' } },
+        { experiencias: { some: { cargo: { contains: termo, mode: 'insensitive' } } } },
+        { experiencias: { some: { area: { contains: termo, mode: 'insensitive' } } } },
+        { experiencias: { some: { empresa: { contains: termo, mode: 'insensitive' } } } },
+        { formacoes: { some: { curso: { contains: termo, mode: 'insensitive' } } } },
+        { formacoes: { some: { instituicao: { contains: termo, mode: 'insensitive' } } } },
+        { habilidades: { some: { habilidade: { nome: { contains: termo, mode: 'insensitive' } } } } },
+      ];
+
+      if (apenasNumeros.length >= 3) {
+        orBusca.push({ cpf: { contains: apenasNumeros } });
+        orBusca.push({ telefone: { contains: apenasNumeros } });
+      }
+
+      if (termosPalavras.length > 1) {
+        termosPalavras.forEach((palavra) => {
+          orBusca.push({ nome: { contains: palavra, mode: 'insensitive' } });
+          orBusca.push({ cargoPretendido: { contains: palavra, mode: 'insensitive' } });
+          orBusca.push({ areaPretendida: { contains: palavra, mode: 'insensitive' } });
+          orBusca.push({ regiao: { contains: palavra, mode: 'insensitive' } });
+          orBusca.push({ experiencias: { some: { cargo: { contains: palavra, mode: 'insensitive' } } } });
+          orBusca.push({ habilidades: { some: { habilidade: { nome: { contains: palavra, mode: 'insensitive' } } } } });
+        });
+      }
+
+      condicoesWhere.push({ OR: orBusca });
+    }
+
+    const where = condicoesWhere.length > 0 ? { AND: condicoesWhere } : undefined;
 
     const candidatos = await this.prisma.candidato.findMany({
-      where: termo
-        ? {
-            OR: [
-              { nome: { contains: termo, mode: 'insensitive' } },
-              { email: { contains: termo, mode: 'insensitive' } },
-              { telefone: { contains: termo, mode: 'insensitive' } },
-              { regiao: { contains: termo, mode: 'insensitive' } },
-              { uf: { contains: termo, mode: 'insensitive' } },
-              { areaPretendida: { contains: termo, mode: 'insensitive' } },
-              { cargoPretendido: { contains: termo, mode: 'insensitive' } },
-              { pretensaoSalarial: { contains: termo, mode: 'insensitive' } },
-              { experiencias: { some: { cargo: { contains: termo, mode: 'insensitive' } } } },
-              { experiencias: { some: { area: { contains: termo, mode: 'insensitive' } } } },
-              { experiencias: { some: { empresa: { contains: termo, mode: 'insensitive' } } } },
-              { habilidades: { some: { habilidade: { nome: { contains: termo, mode: 'insensitive' } } } } },
-            ],
-          }
-        : undefined,
+      where,
       orderBy: { dataCadastro: 'desc' },
-      take: 100,
+      take: 500,
       include: {
         experiencias: { orderBy: { dataInicio: 'desc' } },
         formacoes: true,
@@ -65,11 +102,22 @@ export class AdminController {
   async listarEmpresas(@Headers('x-admin-token') token: string | undefined) {
     this.validarToken(token);
     const empresas = await this.prisma.empresa.findMany({
-      orderBy: { razaoSocial: 'asc' },
-      take: 100,
+      take: 500,
     });
     const agora = Date.now();
     const diaMs = 24 * 60 * 60 * 1000;
+
+    // Fix pending companies at the top
+    empresas.sort((a, b) => {
+      const priority = (s: string) => (s === 'pendente' ? 0 : s === 'aprovada' ? 1 : 2);
+      const pA = priority(a.statusAprovacao);
+      const pB = priority(b.statusAprovacao);
+      if (pA !== pB) return pA - pB;
+      const dataA = a.dataCadastro ? new Date(a.dataCadastro).getTime() : 0;
+      const dataB = b.dataCadastro ? new Date(b.dataCadastro).getTime() : 0;
+      return dataB - dataA;
+    });
+
     return empresas.map(({ senhaHash: _senhaHash, twoFaSecret: _twoFaSecret, ...empresa }) => {
       const diasDesdeCadastro = Math.max(0, Math.floor((agora - empresa.dataCadastro.getTime()) / diaMs));
       return {
@@ -204,10 +252,21 @@ export class AdminController {
     this.validarToken(token);
     return this.prisma.logVisualizacao.findMany({
       orderBy: { dataHora: 'desc' },
-      take: 100,
+      take: 500,
       include: {
-        empresa: { select: { razaoSocial: true, email: true } },
-        candidato: { select: { nome: true, email: true } },
+        empresa: { select: { id: true, razaoSocial: true, email: true, statusAprovacao: true } },
+        candidato: {
+          select: {
+            id: true,
+            nome: true,
+            email: true,
+            telefone: true,
+            regiao: true,
+            uf: true,
+            cargoPretendido: true,
+            areaPretendida: true,
+          },
+        },
       },
     });
   }
@@ -226,9 +285,30 @@ export class AdminController {
     @Res() res: Response,
   ) {
     this.validarToken(token);
-    const indicadores = await this.montarIndicadores(meses);
-    const xml = this.gerarExcelXml(indicadores);
-    res.setHeader('Content-Disposition', 'attachment; filename="indicadores-sinpapel.xls"');
+    const [indicadores, empresas, candidatos, logs] = await Promise.all([
+      this.montarIndicadores(meses),
+      this.prisma.empresa.findMany({
+        orderBy: { dataCadastro: 'desc' },
+      }),
+      this.prisma.candidato.findMany({
+        orderBy: { dataCadastro: 'desc' },
+        include: {
+          experiencias: { orderBy: { dataInicio: 'desc' }, take: 1 },
+          habilidades: { include: { habilidade: true } },
+        },
+      }),
+      this.prisma.logVisualizacao.findMany({
+        orderBy: { dataHora: 'desc' },
+        take: 500,
+        include: {
+          empresa: { select: { razaoSocial: true, email: true } },
+          candidato: { select: { nome: true, email: true, cargoPretendido: true, regiao: true, uf: true } },
+        },
+      }),
+    ]);
+
+    const xml = this.gerarExcelXml(indicadores, empresas, candidatos, logs);
+    res.setHeader('Content-Disposition', 'attachment; filename="relatorio-completo-sinpapel.xls"');
     res.send(xml);
   }
 
@@ -323,7 +403,12 @@ export class AdminController {
     };
   }
 
-  private gerarExcelXml(indicadores: Awaited<ReturnType<AdminController['montarIndicadores']>>) {
+  private gerarExcelXml(
+    indicadores: Awaited<ReturnType<AdminController['montarIndicadores']>>,
+    empresas: any[] = [],
+    candidatos: any[] = [],
+    logs: any[] = [],
+  ) {
     const escape = (valor: unknown) => String(valor ?? '')
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -332,13 +417,19 @@ export class AdminController {
     const row = (values: unknown[]) => `<Row>${values.map((value) => `<Cell><Data ss:Type="${typeof value === 'number' ? 'Number' : 'String'}">${escape(value)}</Data></Cell>`).join('')}</Row>`;
     const sheet = (name: string, rows: string[]) => `<Worksheet ss:Name="${escape(name)}"><Table>${rows.join('')}</Table></Worksheet>`;
 
+    const formatData = (d?: Date | string | null) => {
+      if (!d) return '';
+      const dt = new Date(d);
+      return Number.isNaN(dt.getTime()) ? '' : dt.toISOString().slice(0, 10);
+    };
+
     return `<?xml version="1.0" encoding="UTF-8"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
  xmlns:x="urn:schemas-microsoft-com:office:excel"
  xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
-${sheet('Resumo', [
+${sheet('Resumo Executivo', [
   row(['Indicador', 'Valor']),
   row(['Currículos totais', indicadores.resumo.totalCandidatos]),
   row(['Currículos ativos', indicadores.resumo.ativos]),
@@ -349,9 +440,50 @@ ${sheet('Resumo', [
   row(['Revalidações confirmadas', indicadores.resumo.revalidacoesConfirmadas]),
   row(['Taxa de revalidação (%)', indicadores.resumo.taxaRevalidacao]),
 ])}
-${sheet('Ranking empresas', [
-  row(['Empresa', 'E-mail', 'Visualizacoes']),
+${sheet('Empresas Detalhadas', [
+  row(['Razão Social', 'CNPJ', 'E-mail', 'Status Aprovação', 'Data Cadastro']),
+  ...empresas.map((e) => row([e.razaoSocial, e.cnpj, e.email, e.statusAprovacao, formatData(e.dataCadastro)])),
+])}
+${sheet('Base de Currículos', [
+  row(['Nome', 'CPF', 'E-mail', 'Telefone', 'Cidade', 'UF', 'Cargo Pretendido', 'Área', 'Escolaridade', 'Pretensão Salarial', 'Experiência Total', 'CNH', 'Início Imediato', 'Status', 'Data Cadastro', 'Habilidades']),
+  ...candidatos.map((c) =>
+    row([
+      c.nome,
+      c.cpf,
+      c.email,
+      c.telefone,
+      c.regiao,
+      c.uf ?? '',
+      c.cargoPretendido ?? c.experiencias?.[0]?.cargo ?? '',
+      c.areaPretendida ?? '',
+      c.escolaridade ?? '',
+      c.pretensaoSalarial ?? '',
+      c.anosExperienciaTotal ?? '',
+      c.possuiCnh ? c.categoriaCnh || 'Sim' : 'Não',
+      c.inicioImediato ? 'Sim' : 'Não',
+      c.ativo ? 'Ativo' : 'Inativo',
+      formatData(c.dataCadastro),
+      (c.habilidades ?? []).map((h: any) => h.habilidade?.nome ?? h).join(', '),
+    ]),
+  ),
+])}
+${sheet('Ranking Uso Empresas', [
+  row(['Empresa', 'E-mail', 'Visualizações no Período']),
   ...indicadores.rankingUsoEmpresas.map((item) => row([item.razaoSocial, item.email, item.visualizacoes])),
+])}
+${sheet('Logs de Acessos', [
+  row(['Data/Hora', 'Empresa', 'E-mail Empresa', 'Candidato Visualizado', 'E-mail Candidato', 'Cargo', 'Localidade']),
+  ...logs.map((l) =>
+    row([
+      l.dataHora ? new Date(l.dataHora).toISOString().replace('T', ' ').slice(0, 19) : '',
+      l.empresa?.razaoSocial ?? '',
+      l.empresa?.email ?? '',
+      l.candidato?.nome ?? '',
+      l.candidato?.email ?? '',
+      l.candidato?.cargoPretendido ?? '',
+      `${l.candidato?.regiao ?? ''}${l.candidato?.uf ? `/${l.candidato.uf}` : ''}`,
+    ]),
+  ),
 ])}
 ${sheet('Contratações', [
   row(['Período', 'Contratações']),
