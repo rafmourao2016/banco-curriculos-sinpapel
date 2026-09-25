@@ -9,5 +9,6 @@ import { AuthModule } from '../auth/auth.module';
   imports: [AuthModule],
   controllers: [EmpresasController],
   providers: [EmpresasService, PrismaService, JevService],
+  exports: [EmpresasService, JevService],
 })
 export class EmpresasModule {}
