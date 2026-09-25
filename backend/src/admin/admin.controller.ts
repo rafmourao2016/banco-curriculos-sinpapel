@@ -18,11 +18,13 @@ export class AdminController {
   async listarCandidatos(
     @Headers('x-admin-token') token: string | undefined,
     @Query('q') busca?: string,
+    @Query('cidade') cidade?: string,
     @Query('status') status?: string,
   ) {
     this.validarToken(token);
     const termo = busca?.trim();
     const apenasNumeros = termo ? termo.replace(/\D/g, '') : '';
+    const cidadeFiltro = cidade?.trim();
 
     const condicoesWhere: any[] = [];
 
@@ -32,8 +34,11 @@ export class AdminController {
       condicoesWhere.push({ ativo: false });
     }
 
+    if (cidadeFiltro) {
+      condicoesWhere.push({ regiao: { equals: cidadeFiltro, mode: 'insensitive' } });
+    }
+
     if (termo) {
-      const termosPalavras = termo.split(/\s+/).filter((p) => p.length >= 2);
       const orBusca: any[] = [
         { nome: { contains: termo, mode: 'insensitive' } },
         { email: { contains: termo, mode: 'insensitive' } },
@@ -55,17 +60,6 @@ export class AdminController {
       if (apenasNumeros.length >= 3) {
         orBusca.push({ cpf: { contains: apenasNumeros } });
         orBusca.push({ telefone: { contains: apenasNumeros } });
-      }
-
-      if (termosPalavras.length > 1) {
-        termosPalavras.forEach((palavra) => {
-          orBusca.push({ nome: { contains: palavra, mode: 'insensitive' } });
-          orBusca.push({ cargoPretendido: { contains: palavra, mode: 'insensitive' } });
-          orBusca.push({ areaPretendida: { contains: palavra, mode: 'insensitive' } });
-          orBusca.push({ regiao: { contains: palavra, mode: 'insensitive' } });
-          orBusca.push({ experiencias: { some: { cargo: { contains: palavra, mode: 'insensitive' } } } });
-          orBusca.push({ habilidades: { some: { habilidade: { nome: { contains: palavra, mode: 'insensitive' } } } } });
-        });
       }
 
       condicoesWhere.push({ OR: orBusca });

@@ -171,6 +171,7 @@ export default function AdminPage() {
   // Filtros interativos
   const [filtroStatusCandidato, setFiltroStatusCandidato] = useState<'todos' | 'ativos' | 'inativos'>('todos');
   const [filtroStatusEmpresa, setFiltroStatusEmpresa] = useState<'todas' | 'pendentes' | 'aprovadas' | 'reprovadas'>('todas');
+  const [filtroCidade, setFiltroCidade] = useState('');
   const [buscaEmpresas, setBuscaEmpresas] = useState('');
   const [buscaLogs, setBuscaLogs] = useState('');
   const [modoLogs, setModoLogs] = useState<'segmentado' | 'timeline'>('segmentado');
@@ -207,6 +208,7 @@ export default function AdminPage() {
     setAutenticado(false);
     setToken('');
     setBusca('');
+    setFiltroCidade('');
     setBuscaEmpresas('');
     setBuscaLogs('');
     setCandidatos([]);
@@ -285,7 +287,7 @@ export default function AdminPage() {
     }
   }
 
-  async function carregarCandidatos(event?: FormEvent, tokenParam?: string, queryParam?: string) {
+  async function carregarCandidatos(event?: FormEvent, tokenParam?: string, queryParam?: string, cidadeParam?: string) {
     event?.preventDefault();
     setErro(null);
     setMensagem(null);
@@ -298,8 +300,10 @@ export default function AdminPage() {
 
     try {
       const termoBusca = queryParam !== undefined ? queryParam : busca;
+      const cidadeAtiva = cidadeParam !== undefined ? cidadeParam : filtroCidade;
       const params = new URLSearchParams();
       if (termoBusca.trim()) params.set('q', termoBusca.trim());
+      if (cidadeAtiva.trim()) params.set('cidade', cidadeAtiva.trim());
 
       const res = await fetch(`${API_URL}/admin/candidatos?${params.toString()}`, {
         headers: { 'x-admin-token': activeToken },
@@ -603,19 +607,32 @@ export default function AdminPage() {
   function filtrarPorCidade(cidadeNome: string) {
     setModalDistribuicaoAberta(false);
     setFiltroStatusCandidato('ativos');
-    setBusca(cidadeNome);
-    void carregarCandidatos(undefined, undefined, cidadeNome);
+    setFiltroCidade(cidadeNome);
+    setBusca('');
+    setLimiteExibicao(30);
+    void carregarCandidatos(undefined, undefined, '', cidadeNome);
     secaoCandidatosRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
-  // Candidatos filtrados por busca local e status
+  function limparFiltroCidade() {
+    setFiltroCidade('');
+    setLimiteExibicao(25);
+    void carregarCandidatos(undefined, undefined, busca, '');
+  }
+
+  // Candidatos filtrados por busca local, cidade exata e status
   const candidatosExibidos = useMemo(() => {
     return candidatos.filter((c) => {
       if (filtroStatusCandidato === 'ativos' && !c.ativo) return false;
       if (filtroStatusCandidato === 'inativos' && c.ativo) return false;
+      if (filtroCidade.trim()) {
+        const cid = filtroCidade.trim().toLowerCase();
+        const reg = (c.regiao || '').trim().toLowerCase();
+        if (reg !== cid) return false;
+      }
       return true;
     });
-  }, [candidatos, filtroStatusCandidato]);
+  }, [candidatos, filtroStatusCandidato, filtroCidade]);
 
   const candidatosPaginados = useMemo(() => {
     return candidatosExibidos.slice(0, limiteExibicao);
@@ -1390,6 +1407,27 @@ export default function AdminPage() {
 
           {/* Filtros de Status e Formulário de Busca Ampla */}
           <div className="mt-4 flex flex-col gap-3">
+            {filtroCidade && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50 border border-emerald-300/80 px-4 py-2.5 text-xs text-emerald-950 shadow-xs">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-bold text-emerald-900">📍 Cidade selecionada:</span>
+                  <span className="rounded-md bg-emerald-700 px-2.5 py-0.5 text-xs font-bold text-white shadow-xs">
+                    {filtroCidade}
+                  </span>
+                  <span className="text-emerald-800 font-medium">
+                    ({candidatosExibidos.length} currículo{candidatosExibidos.length === 1 ? '' : 's'})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={limparFiltroCidade}
+                  className="rounded-lg border border-emerald-600 bg-white px-3 py-1 text-xs font-bold text-emerald-800 transition hover:bg-emerald-100 cursor-pointer"
+                >
+                  ✕ Ver todas as cidades
+                </button>
+              </div>
+            )}
+
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -1434,14 +1472,15 @@ export default function AdminPage() {
               >
                 {carregando ? 'Buscando...' : 'Buscar'}
               </button>
-              {busca && (
+              {(busca || filtroCidade) && (
                 <button
                   type="button"
                   onClick={() => {
                     setBusca('');
-                    void carregarCandidatos(undefined, undefined, '');
+                    setFiltroCidade('');
+                    void carregarCandidatos(undefined, undefined, '', '');
                   }}
-                  className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                  className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 cursor-pointer"
                 >
                   Limpar
                 </button>
