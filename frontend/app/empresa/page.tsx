@@ -936,7 +936,7 @@ export default function EmpresaPage() {
               )}
 
               {candidatos.map((candidato) => (
-                <article key={candidato.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+                <article key={candidato.id} className="candidate-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,1.15fr)] lg:items-start">
                     <div className="min-w-0">
                       <h3 className="text-xl font-semibold text-slate-950">{candidato.nome}</h3>

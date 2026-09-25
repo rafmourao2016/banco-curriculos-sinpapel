@@ -83,7 +83,12 @@ p,
 h1,
 h2,
 h3 {
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.candidate-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 240px;
 }
 
 .site-loader {

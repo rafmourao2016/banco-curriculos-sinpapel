@@ -181,6 +181,7 @@ export default function AdminPage() {
   const [buscaDistribuicaoCidade, setBuscaDistribuicaoCidade] = useState('');
   const [copiadoResumo, setCopiadoResumo] = useState(false);
   const [montado, setMontado] = useState(false);
+  const [limiteExibicao, setLimiteExibicao] = useState(25);
 
   useEffect(() => {
     setMontado(true);
@@ -615,6 +616,10 @@ export default function AdminPage() {
       return true;
     });
   }, [candidatos, filtroStatusCandidato]);
+
+  const candidatosPaginados = useMemo(() => {
+    return candidatosExibidos.slice(0, limiteExibicao);
+  }, [candidatosExibidos, limiteExibicao]);
 
   // Empresas filtradas por status e termo de busca
   const empresasExibidas = useMemo(() => {
@@ -1446,11 +1451,11 @@ export default function AdminPage() {
 
           {/* Cards dos Candidatos */}
           <div className="mt-5 grid gap-4">
-            {candidatosExibidos.map((candidato) => {
+            {candidatosPaginados.map((candidato) => {
               const experiencia = candidato.experiencias[0];
 
               return (
-                <article key={candidato.id} className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300">
+                <article key={candidato.id} className="candidate-card min-w-0 rounded-xl border border-slate-200 bg-white p-5 shadow-xs transition hover:border-slate-300">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
@@ -1581,6 +1586,30 @@ export default function AdminPage() {
               <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50/50 p-10 text-center text-slate-600">
                 <p className="text-base font-semibold text-slate-800">Nenhum currículo encontrado.</p>
                 <p className="text-sm mt-1">Tente ajustar o termo de busca ou o filtro de status acima.</p>
+              </div>
+            )}
+
+            {candidatosExibidos.length > limiteExibicao && (
+              <div className="mt-2 flex flex-col sm:flex-row items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                <p className="text-xs text-slate-600">
+                  Exibindo <strong>{candidatosPaginados.length}</strong> de <strong>{candidatosExibidos.length}</strong> currículos
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setLimiteExibicao((prev) => prev + 30)}
+                    className="rounded-lg bg-brand-600 px-4 py-2 text-xs font-semibold text-white shadow-xs hover:bg-brand-700 transition"
+                  >
+                    Carregar mais 30 currículos &darr;
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setLimiteExibicao(candidatosExibidos.length)}
+                    className="rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition"
+                  >
+                    Exibir todos ({candidatosExibidos.length})
+                  </button>
+                </div>
               </div>
             )}
           </div>
