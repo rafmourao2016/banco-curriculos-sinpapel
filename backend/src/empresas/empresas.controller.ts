@@ -85,8 +85,16 @@ export class EmpresasController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Post('avaliar-match')
+  avaliarMatch(
+    @Req() req: any,
+    @Body() dto: { candidatoId: string; vagaId?: string; requisitosCustom?: string },
+  ) {
+    return this.empresasService.avaliarMatchJev(req.empresaId, dto);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Get('candidatos/:id/pdf')
-  @Header('Content-Type', 'application/pdf')
   async baixarPdf(@Req() req: any, @Param('id') candidatoId: string, @Res() res: Response) {
     const { pdf, nome } = await this.empresasService.gerarPdfCandidato(req.empresaId, candidatoId);
     const nomeLimpo = (nome || 'candidato')

@@ -125,6 +125,18 @@ type Vaga = {
   ativa: boolean;
 };
 
+type JevMatchInfo = {
+  scoreGeral: number;
+  nivelAderencia: string;
+  requisitosTecnicosNoul: number;
+  atendeRequisitosTecnicos: boolean;
+  senioridade: 'junior' | 'pleno' | 'senior';
+  senioridadeRotulo: string;
+  recomendacao: 'entrevistar' | 'avaliar_com_ressalvas' | 'banco_de_talentos' | 'desqualificado';
+  recomendacaoRotulo: string;
+  resumoDecisao: string;
+};
+
 export default function EmpresaPage() {
   const [modo, setModo] = useState<'entrar' | 'cadastrar'>('entrar');
   const [token, setToken] = useState('');
@@ -153,6 +165,9 @@ export default function EmpresaPage() {
   const [imagemVagaPreview, setImagemVagaPreview] = useState<string | null>(null);
   const [modalImagemVaga, setModalImagemVaga] = useState<string | null>(null);
   const [montado, setMontado] = useState(false);
+  const [avaliandoJevId, setAvaliandoJevId] = useState<string | null>(null);
+  const [resultadosJev, setResultadosJev] = useState<Record<string, JevMatchInfo>>({});
+  const [vagaSelecionadaJev, setVagaSelecionadaJev] = useState<string>('');
   const inputImagemVagaRef = useRef<HTMLInputElement>(null);
   const formBuscaRef = useRef<HTMLFormElement>(null);
   const [formResetKey, setFormResetKey] = useState(0);
@@ -160,6 +175,34 @@ export default function EmpresaPage() {
   useEffect(() => {
     setMontado(true);
   }, []);
+
+  async function avaliarComJev(candidatoId: string) {
+    if (!token) return;
+    setAvaliandoJevId(candidatoId);
+    try {
+      const res = await fetch(`${API_URL}/empresas/avaliar-match`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          candidatoId,
+          vagaId: vagaSelecionadaJev || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Não foi possível avaliar com o Jev.');
+      }
+      const data: JevMatchInfo = await res.json();
+      setResultadosJev((prev) => ({ ...prev, [candidatoId]: data }));
+    } catch (e: any) {
+      alert(e.message || 'Erro ao avaliar candidato com a IA Jev.');
+    } finally {
+      setAvaliandoJevId(null);
+    }
+  }
 
   function handleUploadImagemVaga(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -930,8 +973,28 @@ export default function EmpresaPage() {
 
             <div className="grid gap-3">
               {buscaRealizada && candidatos.length > 0 && (
-                <div className="flex items-center justify-between px-1 py-1 text-sm font-semibold text-slate-700">
-                  <span>{candidatos.length === 1 ? '1 candidato encontrado' : `${candidatos.length} candidatos encontrados`}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-1 py-1 text-sm">
+                  <span className="font-semibold text-slate-700">
+                    {candidatos.length === 1 ? '1 candidato encontrado' : `${candidatos.length} candidatos encontrados`}
+                  </span>
+
+                  {vagas.length > 0 && (
+                    <div className="flex items-center gap-2 text-xs">
+                      <span className="font-bold text-brand-800">⚡ Match IA contra vaga:</span>
+                      <select
+                        value={vagaSelecionadaJev}
+                        onChange={(e) => setVagaSelecionadaJev(e.target.value)}
+                        className="rounded-lg border border-brand-300 bg-white px-2.5 py-1 text-xs font-semibold text-brand-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/10"
+                      >
+                        <option value="">Geral (Setor de Papel e Celulose)</option>
+                        {vagas.map((vaga) => (
+                          <option key={vaga.id} value={vaga.id}>
+                            {vaga.area}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -939,7 +1002,14 @@ export default function EmpresaPage() {
                 <article key={candidato.id} className="candidate-card rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                   <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,1.15fr)] lg:items-start">
                     <div className="min-w-0">
-                      <h3 className="text-xl font-semibold text-slate-950">{candidato.nome}</h3>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-xl font-semibold text-slate-950">{candidato.nome}</h3>
+                        {resultadosJev[candidato.id] && (
+                          <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-extrabold text-white shadow-2xs">
+                            ⚡ {resultadosJev[candidato.id].scoreGeral}% Match Jev
+                          </span>
+                        )}
+                      </div>
                       <p className="mt-1 text-sm font-medium text-slate-600">
                         {candidato.cargoPretendido ?? candidato.experiencias[0]?.cargo ?? 'Cargo não informado'} - {candidato.regiao}{candidato.uf ? `/${candidato.uf}` : ''}
                       </p>
@@ -958,6 +1028,51 @@ export default function EmpresaPage() {
                             </span>
                           ))}
                       </div>
+
+                      {/* Card de Diagnóstico do Jev */}
+                      {resultadosJev[candidato.id] ? (
+                        <div className="mt-4 rounded-xl border border-emerald-300 bg-emerald-50/70 p-3.5 text-xs text-emerald-950 shadow-xs">
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-emerald-200/80 pb-2">
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-sm">⚡</span>
+                              <strong className="font-extrabold text-emerald-900">Parecer da IA Jev</strong>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-md bg-white border border-emerald-200 px-2 py-0.5 font-bold text-emerald-800">
+                                {resultadosJev[candidato.id].senioridadeRotulo}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="mt-2.5 space-y-1.5">
+                            <p className="font-semibold text-slate-800">
+                              <strong>Recomendação:</strong> {resultadosJev[candidato.id].recomendacaoRotulo}
+                            </p>
+                            <div className="flex items-center justify-between text-[11px] text-slate-600">
+                              <span>Aderência Técnica aos Requisitos:</span>
+                              <strong>{Math.round(resultadosJev[candidato.id].requisitosTecnicosNoul * 100)}%</strong>
+                            </div>
+                            <div className="h-1.5 w-full overflow-hidden rounded-full bg-emerald-200/70">
+                              <div
+                                className="h-full rounded-full bg-emerald-600 transition-all duration-500"
+                                style={{ width: `${resultadosJev[candidato.id].scoreGeral}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mt-4">
+                          <button
+                            type="button"
+                            disabled={avaliandoJevId === candidato.id}
+                            onClick={() => avaliarComJev(candidato.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-brand-300 bg-brand-50/80 px-3 py-1.5 text-xs font-bold text-brand-800 transition hover:bg-brand-100 hover:border-brand-400 disabled:opacity-60 cursor-pointer shadow-2xs"
+                          >
+                            <span>⚡</span>
+                            {avaliandoJevId === candidato.id ? 'Calculando match com Jev...' : 'Avaliar Match com IA (Jev)'}
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <div className="grid gap-2 text-sm text-slate-700 min-w-0">
                       <p className="break-words"><strong>E-mail:</strong> {candidato.email}</p>

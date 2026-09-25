@@ -4,6 +4,7 @@ import * as argon2 from 'argon2';
 import * as speakeasy from 'speakeasy';
 import * as QRCode from 'qrcode';
 import { PrismaService } from '../common/prisma.service';
+import { JevService } from '../common/jev.service';
 import { CriarEmpresaDto } from './dto/criar-empresa.dto';
 import { gerarCurriculoPdf } from '../common/curriculo-pdf';
 import { gerarEmbedding, vetorPg } from '../common/embedding';
@@ -14,7 +15,10 @@ const SEMANTIC_CACHE_TTL_MS = 5 * 60 * 1000;
 
 @Injectable()
 export class EmpresasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jevService: JevService,
+  ) {}
 
   async status2fa(empresaId: string) {
     const empresa = await this.validarEmpresa(empresaId);
@@ -413,6 +417,55 @@ export class EmpresasService {
 
     const pdf = await gerarCurriculoPdf(candidato);
     return { pdf, nome: candidato.nome };
+  }
+
+  async avaliarMatchJev(
+    empresaId: string,
+    dto: { candidatoId: string; vagaId?: string; requisitosCustom?: string },
+  ) {
+    await this.validarEmpresa(empresaId);
+
+    const candidato = await this.prisma.candidato.findUnique({
+      where: { id: dto.candidatoId },
+      include: {
+        experiencias: { orderBy: { dataInicio: 'desc' } },
+        formacoes: true,
+        habilidades: { include: { habilidade: true } },
+      },
+    });
+
+    if (!candidato) throw new NotFoundException('Candidato não encontrado.');
+
+    let vagaTexto = dto.requisitosCustom?.trim() || '';
+
+    if (dto.vagaId) {
+      const vaga = await this.prisma.vagaNecessidade.findFirst({
+        where: { id: dto.vagaId, empresaId },
+      });
+      if (vaga) {
+        vagaTexto = `ÁREA DA VAGA: ${vaga.area}\nREQUISITOS / ATIVIDADES:\n${vaga.requisitos}`;
+      }
+    }
+
+    if (!vagaTexto) {
+      vagaTexto = 'Vaga padrão no setor industrial de papel, celulose e embalagens (Operação/Manutenção/Logística/Qualidade/Administrativo).';
+    }
+
+    const candidatoTexto = [
+      `Nome: ${candidato.nome}`,
+      `Cargo pretendido: ${candidato.cargoPretendido || 'Não informado'}`,
+      `Área pretendida: ${candidato.areaPretendida || 'Geral'}`,
+      `Cidade/UF: ${candidato.regiao || 'MG'}/${candidato.uf || 'MG'}`,
+      `Escolaridade: ${candidato.escolaridade || 'Não informada'}`,
+      `Experiência total: ${candidato.anosExperienciaTotal || 'Não informada'}`,
+      `Setor de papel/embalagem: ${candidato.experienciaSetorPapel ? 'Sim' : 'Não'}`,
+      `Início imediato: ${candidato.inicioImediato ? 'Sim' : 'Não'}`,
+      `Habilidades: ${candidato.habilidades.map((h) => h.habilidade.nome).join(', ') || 'Nenhuma informada'}`,
+      `Experiências profissionais: ${candidato.experiencias.map((e) => `${e.cargo} em ${e.empresa || 'Empresa'} (${e.descricao || ''})`).join(' | ') || 'Sem experiências registradas'}`,
+      `Formações / Cursos: ${candidato.formacoes.map((f) => `${f.curso} na ${f.instituicao}`).join(', ') || 'Nenhuma formação adicional'}`,
+    ].join('\n');
+
+    return this.jevService.avaliarMatch(candidatoTexto, vagaTexto);
   }
 
   private async validarEmpresa(empresaId: string) {
