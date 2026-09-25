@@ -15,23 +15,24 @@ export class AuthService {
   ) {}
 
   async solicitarRecuperacao(email: string, tipo: 'candidato' | 'empresa') {
+    const emailLimpo = email.trim();
     const usuario = tipo === 'candidato'
-      ? await this.prisma.candidato.findUnique({ where: { email }, select: { email: true } })
-      : await this.prisma.empresa.findUnique({ where: { email }, select: { email: true } });
+      ? await this.prisma.candidato.findFirst({ where: { email: { equals: emailLimpo, mode: 'insensitive' } }, select: { email: true } })
+      : await this.prisma.empresa.findFirst({ where: { email: { equals: emailLimpo, mode: 'insensitive' } }, select: { email: true } });
 
     if (!usuario) return { mensagem: 'Se o e-mail estiver cadastrado, você receberá um link de recuperação.' };
 
-    await this.prisma.recuperacaoSenha.deleteMany({ where: { email, tipo } });
+    await this.prisma.recuperacaoSenha.deleteMany({ where: { email: usuario.email, tipo } });
     const token = randomBytes(32).toString('hex');
     const tokenHash = createHash('sha256').update(token).digest('hex');
     const expiraEm = new Date(Date.now() + 60 * 60 * 1000);
-    await this.prisma.recuperacaoSenha.create({ data: { email, tipo, tokenHash, expiraEm } });
+    await this.prisma.recuperacaoSenha.create({ data: { email: usuario.email, tipo, tokenHash, expiraEm } });
 
     const appUrl = process.env.APP_URL ?? 'https://sinpapel.vercel.app';
     const link = `${appUrl}/recuperar-senha?token=${encodeURIComponent(token)}&tipo=${tipo}`;
     try {
       await this.emailService.send({
-        to: email,
+        to: usuario.email,
         subject: 'Recuperação de senha - SINPAPEL',
         html: `<p>Recebemos uma solicitação para redefinir sua senha no SINPAPEL.</p><p><a href="${link}">Criar nova senha</a></p><p>Este link expira em 1 hora e pode ser usado uma única vez.</p>`,
       });
@@ -78,7 +79,10 @@ export class AuthService {
   }
 
   async loginCandidato(email: string, senha: string) {
-    const candidato = await this.prisma.candidato.findUnique({ where: { email } });
+    const emailLimpo = email.trim();
+    const candidato = await this.prisma.candidato.findFirst({
+      where: { email: { equals: emailLimpo, mode: 'insensitive' } },
+    });
     if (!candidato) throw new UnauthorizedException('Credenciais inválidas.');
 
     const senhaValida = await argon2.verify(candidato.senhaHash, senha);
@@ -93,7 +97,10 @@ export class AuthService {
   }
 
   async loginEmpresa(email: string, senha: string, codigo2fa?: string) {
-    const empresa = await this.prisma.empresa.findUnique({ where: { email } });
+    const emailLimpo = email.trim();
+    const empresa = await this.prisma.empresa.findFirst({
+      where: { email: { equals: emailLimpo, mode: 'insensitive' } },
+    });
     if (!empresa) throw new UnauthorizedException('Credenciais inválidas.');
 
     const senhaValida = await argon2.verify(empresa.senhaHash, senha);

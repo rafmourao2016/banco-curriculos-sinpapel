@@ -334,11 +334,12 @@ export default function EmpresaPage() {
     event.preventDefault();
     setErro(null);
     setMensagem(null);
-    if (!email.trim()) {
+    const emailLimpo = email.trim();
+    if (!emailLimpo) {
       setErro('Informe o e-mail da empresa.');
       return;
     }
-    if (!email.includes('@')) {
+    if (!emailLimpo.includes('@')) {
       setErro('Informe um e-mail válido.');
       return;
     }
@@ -351,16 +352,16 @@ export default function EmpresaPage() {
       const res = await fetch(`${API_URL}/auth/empresa/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha, ...(codigo2fa.trim() ? { codigo2fa: codigo2fa.trim() } : {}) }),
+        body: JSON.stringify({ email: emailLimpo, senha, ...(codigo2fa.trim() ? { codigo2fa: codigo2fa.trim() } : {}) }),
       });
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
         throw new Error(detalhe ?? 'E-mail ou senha inválidos.');
       }
       if (data.requer2fa) {
         setExige2fa(true);
-        setMensagem(data.mensagem ?? 'Digite o código do aplicativo autenticador.');
+        setMensagem(data.mensagem ?? 'Digite o código de 6 dígitos do aplicativo autenticador.');
         return;
       }
       setToken(data.accessToken);
@@ -376,7 +377,7 @@ export default function EmpresaPage() {
       await carregarStatus2fa(data.accessToken);
       setCodigo2fa('');
       setExige2fa(false);
-      setMensagem('Empresa conectada.');
+      setMensagem('Empresa conectada com sucesso.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -384,11 +385,20 @@ export default function EmpresaPage() {
     }
   }
 
-  async function carregarStatus2fa(accessToken: string) {
-    const res = await fetch(`${API_URL}/empresas/2fa/status`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (res.ok) setTwoFaAtivo((await res.json()).ativo === true);
+  async function carregarStatus2fa(accessToken = token) {
+    if (!accessToken) return;
+    try {
+      const res = await fetch(`${API_URL}/empresas/2fa/status`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.status === 401 || res.status === 403) {
+        sair();
+        return;
+      }
+      if (res.ok) setTwoFaAtivo((await res.json()).ativo === true);
+    } catch {
+      // ignore
+    }
   }
 
   async function iniciar2fa() {
@@ -460,10 +470,18 @@ export default function EmpresaPage() {
 
   async function carregarVagas(accessToken = token) {
     if (!accessToken) return;
-    const res = await fetch(`${API_URL}/empresas/vagas`, {
-      headers: { Authorization: `Bearer ${accessToken}` },
-    });
-    if (res.ok) setVagas(await res.json());
+    try {
+      const res = await fetch(`${API_URL}/empresas/vagas`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+      if (res.status === 401 || res.status === 403) {
+        sair();
+        return;
+      }
+      if (res.ok) setVagas(await res.json());
+    } catch {
+      // ignore
+    }
   }
 
   async function criarVaga(event: FormEvent<HTMLFormElement>) {
@@ -584,6 +602,11 @@ export default function EmpresaPage() {
       const res = await fetch(`${API_URL}/empresas/candidatos?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      if (res.status === 401 || res.status === 403) {
+        sair();
+        setErro('Sua sessão expirou ou não é válida. Faça login novamente.');
+        return;
+      }
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
@@ -665,12 +688,27 @@ export default function EmpresaPage() {
                 </button>
               </div>
 
+              {erro && (
+                <div role="alert" className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm font-medium text-red-700">
+                  {erro}
+                </div>
+              )}
+              {mensagem && (
+                <div role="status" className="mt-4 rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm font-medium text-emerald-800">
+                  {mensagem}
+                </div>
+              )}
+
               {modo === 'entrar' ? (
                 <form onSubmit={entrar} noValidate className="mt-4 grid gap-3">
                   <input className={inputClasses} type="email" autoComplete="email" placeholder="E-mail da empresa" value={email} onChange={(e) => setEmail(e.target.value)} />
                   <input className={inputClasses} type="password" autoComplete="current-password" minLength={8} placeholder="Senha" value={senha} onChange={(e) => setSenha(e.target.value)} />
                   {exige2fa && (
-                    <input className={inputClasses} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Código de 6 dígitos do autenticador" value={codigo2fa} onChange={(e) => setCodigo2fa(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                    <div className="grid gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-xs font-bold text-amber-900">Autenticação em 2 Etapas (2FA) Requerida</p>
+                      <p className="text-xs text-amber-800">Digite o código de 6 dígitos gerado no aplicativo autenticador:</p>
+                      <input className={inputClasses} type="text" inputMode="numeric" autoComplete="one-time-code" maxLength={6} placeholder="Código de 6 dígitos" value={codigo2fa} onChange={(e) => setCodigo2fa(e.target.value.replace(/\D/g, '').slice(0, 6))} />
+                    </div>
                   )}
                   <button disabled={carregando} className="rounded-lg bg-brand-600 px-5 py-3 font-semibold text-white disabled:opacity-60">
                     {carregando ? 'Entrando...' : exige2fa ? 'Confirmar código e entrar' : 'Entrar'}
@@ -1136,8 +1174,8 @@ export default function EmpresaPage() {
           </section>
         )}
 
-        {erro && <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
-        {mensagem && <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{mensagem}</p>}
+        {token && erro && <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
+        {token && mensagem && <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{mensagem}</p>}
 
         {/* Lightbox para imagem da vaga */}
         {montado && modalImagemVaga && createPortal(
