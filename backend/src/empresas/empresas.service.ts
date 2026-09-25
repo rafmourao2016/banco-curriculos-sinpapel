@@ -132,11 +132,19 @@ export class EmpresasService {
   ) {
     await this.validarEmpresa(empresaId);
     const termo = filtros.q?.trim();
-    const cidades = filtros.cidades
-      ?.split(',')
+    const cidades = [
+      ...(filtros.cidades?.split(',') ?? []),
+      ...(filtros.regiao?.split(',') ?? []),
+    ]
       .map((cidade) => cidade.trim())
       .filter(Boolean)
       .slice(0, 853);
+
+    const ufs = filtros.uf
+      ?.split(',')
+      .map((uf) => uf.trim())
+      .filter(Boolean);
+
     const cursos = filtros.cursos
       ?.split(',')
       .map((curso) => curso.trim())
@@ -147,9 +155,18 @@ export class EmpresasService {
       : null;
 
     const and: any[] = [];
-    if (cidades?.length) {
+    if (ufs?.length === 1) {
+      and.push({ uf: { equals: ufs[0], mode: 'insensitive' as const } });
+    } else if (ufs && ufs.length > 1) {
+      and.push({ OR: ufs.map((uf) => ({ uf: { equals: uf, mode: 'insensitive' as const } })) });
+    }
+
+    if (cidades.length === 1) {
+      and.push({ regiao: { contains: cidades[0], mode: 'insensitive' as const } });
+    } else if (cidades.length > 1) {
       and.push({ OR: cidades.map((cidade) => ({ regiao: { contains: cidade, mode: 'insensitive' as const } })) });
     }
+
     if (filtros.tipoOportunidade === 'jovem_aprendiz') {
       const hoje = new Date();
       const dataMax = new Date(hoje.getFullYear() - 14, hoje.getMonth(), hoje.getDate());
@@ -194,8 +211,6 @@ export class EmpresasService {
         ativo: true,
         ...(idsSemanticos ? { id: { in: idsSemanticos } } : {}),
         ...(filtros.area ? { areaPretendida: filtros.area } : {}),
-        ...(filtros.regiao ? { regiao: { contains: filtros.regiao.trim(), mode: 'insensitive' } } : {}),
-        ...(filtros.uf ? { uf: { equals: filtros.uf.trim(), mode: 'insensitive' } } : {}),
         ...(filtros.escolaridade ? { escolaridade: filtros.escolaridade as any } : {}),
         ...(filtros.experiencia ? { anosExperienciaTotal: filtros.experiencia } : {}),
         ...(filtros.cnh === 'sim' ? { possuiCnh: true } : {}),
