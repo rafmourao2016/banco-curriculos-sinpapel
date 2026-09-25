@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 
 type Experiencia = {
@@ -179,6 +180,11 @@ export default function AdminPage() {
   const [modalDistribuicaoAberta, setModalDistribuicaoAberta] = useState(false);
   const [buscaDistribuicaoCidade, setBuscaDistribuicaoCidade] = useState('');
   const [copiadoResumo, setCopiadoResumo] = useState(false);
+  const [montado, setMontado] = useState(false);
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
 
   const secaoCandidatosRef = useRef<HTMLElement>(null);
   const secaoEmpresasRef = useRef<HTMLElement>(null);
@@ -1607,15 +1613,15 @@ export default function AdminPage() {
         </section>
 
         {/* Modal de Distribuição Regional de Currículos Ativos */}
-        {modalDistribuicaoAberta && (
+        {montado && modalDistribuicaoAberta && createPortal(
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-3 sm:p-4 backdrop-blur-xs"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/75 p-3 sm:p-4 backdrop-blur-xs overflow-y-auto"
             onClick={() => setModalDistribuicaoAberta(false)}
           >
             <div
-              className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
+              className="relative my-auto flex max-h-[90vh] w-full max-w-2xl flex-col rounded-2xl bg-white shadow-2xl overflow-hidden border border-slate-200"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Modal Header */}
@@ -1631,7 +1637,7 @@ export default function AdminPage() {
                 <button
                   type="button"
                   onClick={() => setModalDistribuicaoAberta(false)}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition"
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition font-bold"
                   aria-label="Fechar"
                 >
                   ✕
@@ -1744,7 +1750,8 @@ export default function AdminPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </main>

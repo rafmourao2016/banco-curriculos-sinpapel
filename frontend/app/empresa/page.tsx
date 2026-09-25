@@ -1,6 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
@@ -151,9 +152,14 @@ export default function EmpresaPage() {
   const [vagas, setVagas] = useState<Vaga[]>([]);
   const [imagemVagaPreview, setImagemVagaPreview] = useState<string | null>(null);
   const [modalImagemVaga, setModalImagemVaga] = useState<string | null>(null);
+  const [montado, setMontado] = useState(false);
   const inputImagemVagaRef = useRef<HTMLInputElement>(null);
   const formBuscaRef = useRef<HTMLFormElement>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+
+  useEffect(() => {
+    setMontado(true);
+  }, []);
 
   function handleUploadImagemVaga(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -1019,30 +1025,31 @@ export default function EmpresaPage() {
         {mensagem && <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{mensagem}</p>}
 
         {/* Lightbox para imagem da vaga */}
-        {modalImagemVaga && (
+        {montado && modalImagemVaga && createPortal(
           <div
             role="dialog"
             aria-modal="true"
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs overflow-y-auto"
             onClick={() => setModalImagemVaga(null)}
           >
             <div
-              className="relative max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl bg-white p-4 shadow-2xl"
+              className="relative my-auto max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl bg-white p-4 shadow-2xl border border-slate-200"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                <span className="text-sm font-bold text-slate-900">Banner / Divulgação da Vaga</span>
+                <span className="text-sm font-bold text-slate-950">Banner / Divulgação da Vaga</span>
                 <button
                   type="button"
                   onClick={() => setModalImagemVaga(null)}
-                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 font-bold"
                 >
                   ✕
                 </button>
               </div>
               <img src={modalImagemVaga} alt="Banner ampliado da vaga" className="mt-3 max-h-[75vh] w-full rounded-lg object-contain" />
             </div>
-          </div>
+          </div>,
+          document.body
         )}
       </div>
     </main>
