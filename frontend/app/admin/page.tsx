@@ -278,7 +278,7 @@ export default function AdminPage() {
     }
   }
 
-  async function carregarCandidatos(event?: FormEvent, tokenParam?: string) {
+  async function carregarCandidatos(event?: FormEvent, tokenParam?: string, queryParam?: string) {
     event?.preventDefault();
     setErro(null);
     setMensagem(null);
@@ -290,8 +290,9 @@ export default function AdminPage() {
     setCarregando(true);
 
     try {
+      const termoBusca = queryParam !== undefined ? queryParam : busca;
       const params = new URLSearchParams();
-      if (busca.trim()) params.set('q', busca.trim());
+      if (termoBusca.trim()) params.set('q', termoBusca.trim());
 
       const res = await fetch(`${API_URL}/admin/candidatos?${params.toString()}`, {
         headers: { 'x-admin-token': activeToken },
@@ -596,9 +597,7 @@ export default function AdminPage() {
     setModalDistribuicaoAberta(false);
     setFiltroStatusCandidato('ativos');
     setBusca(cidadeNome);
-    if (candidatos.length === 0) {
-      void carregarCandidatos();
-    }
+    void carregarCandidatos(undefined, undefined, cidadeNome);
     secaoCandidatosRef.current?.scrollIntoView({ behavior: 'smooth' });
   }
 
@@ -823,10 +822,15 @@ export default function AdminPage() {
                     </div>
                     <p className="mt-2 text-3xl font-extrabold text-emerald-700">{indicadores.resumo.ativos}</p>
                     {distribuicaoCidades.length > 0 && (
-                      <p className="mt-1 text-xs font-medium text-emerald-800 truncate" title={distribuicaoCidades.map((d) => `${d.cidade} ${d.total}`).join(', ')}>
+                      <button
+                        type="button"
+                        onClick={() => setModalDistribuicaoAberta(true)}
+                        className="mt-1 block text-left text-xs font-medium text-emerald-800 hover:text-emerald-950 hover:underline truncate w-full cursor-pointer"
+                        title={distribuicaoCidades.map((d) => `${d.cidade} ${d.total}`).join(', ')}
+                      >
                         {distribuicaoCidades.slice(0, 2).map((d) => `${d.cidade} ${d.total}`).join(' • ')}
                         {distribuicaoCidades.length > 2 ? '...' : ''}
-                      </p>
+                      </button>
                     )}
                   </div>
                   <div className="mt-3 flex items-center justify-between border-t border-emerald-200/60 pt-2 text-xs">
@@ -1424,7 +1428,7 @@ export default function AdminPage() {
                   type="button"
                   onClick={() => {
                     setBusca('');
-                    void carregarCandidatos();
+                    void carregarCandidatos(undefined, undefined, '');
                   }}
                   className="rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
                 >
