@@ -374,11 +374,15 @@ export default function EmpresaPage() {
       } catch {
         // ignore
       }
-      await carregarVagas(data.accessToken);
-      await carregarStatus2fa(data.accessToken);
       setCodigo2fa('');
       setExige2fa(false);
-      setMensagem('Empresa conectada com sucesso.');
+      setCarregando(false);
+
+      // Carregar dados secundários em paralelo em segundo plano
+      void Promise.allSettled([
+        carregarVagas(data.accessToken),
+        carregarStatus2fa(data.accessToken),
+      ]);
     } catch (e: any) {
       if (e?.name === 'TimeoutError' || e?.message?.includes('aborted') || e?.message?.includes('Failed to fetch')) {
         setErro('O servidor da API não respondeu a tempo. Verifique se o serviço está ativo na VPS.');

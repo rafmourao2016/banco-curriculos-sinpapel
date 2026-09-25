@@ -82,8 +82,9 @@ export class AuthService {
     const emailLimpo = email.trim();
     const candidato = await this.prisma.candidato.findFirst({
       where: { email: { equals: emailLimpo, mode: 'insensitive' } },
+      select: { id: true, senhaHash: true, ativo: true },
     });
-    if (!candidato) throw new UnauthorizedException('Credenciais inválidas.');
+    if (!candidato || !candidato.ativo) throw new UnauthorizedException('Credenciais inválidas.');
 
     const senhaValida = await argon2.verify(candidato.senhaHash, senha);
     if (!senhaValida) throw new UnauthorizedException('Credenciais inválidas.');
@@ -100,6 +101,15 @@ export class AuthService {
     const emailLimpo = email.trim();
     const empresa = await this.prisma.empresa.findFirst({
       where: { email: { equals: emailLimpo, mode: 'insensitive' } },
+      select: {
+        id: true,
+        razaoSocial: true,
+        email: true,
+        senhaHash: true,
+        twoFaAtivo: true,
+        twoFaSecret: true,
+        statusAprovacao: true,
+      },
     });
     if (!empresa) throw new UnauthorizedException('Credenciais inválidas.');
 
