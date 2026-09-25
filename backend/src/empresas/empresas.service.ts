@@ -345,13 +345,14 @@ export class EmpresasService {
     return registro;
   }
 
-  async criarVaga(empresaId: string, dto: { area: string; requisitos: string }) {
+  async criarVaga(empresaId: string, dto: { area: string; requisitos: string; imagemUrl?: string }) {
     await this.validarEmpresa(empresaId);
     const vaga = await this.prisma.vagaNecessidade.create({
       data: {
         empresaId,
         area: dto.area,
         requisitos: dto.requisitos,
+        imagemUrl: dto.imagemUrl || null,
         ativa: true,
       },
     });

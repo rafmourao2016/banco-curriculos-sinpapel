@@ -62,7 +62,7 @@ export class EmpresasController {
 
   @UseGuards(JwtAuthGuard)
   @Post('vagas')
-  criarVaga(@Req() req: any, @Body() dto: { area: string; requisitos: string }) {
+  criarVaga(@Req() req: any, @Body() dto: { area: string; requisitos: string; imagemUrl?: string }) {
     return this.empresasService.criarVaga(req.empresaId, dto);
   }
 

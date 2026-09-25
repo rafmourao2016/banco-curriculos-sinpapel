@@ -17,6 +17,12 @@ const rotulos: Record<string, string> = {
   '2501_3500': 'R$ 2.501 a R$ 3.500',
   '3501_5000': 'R$ 3.501 a R$ 5.000',
   acima_5000: 'Acima de R$ 5.000',
+  integral: 'Período Integral',
+  periodo_integral: 'Período Integral',
+  manha: 'Manhã',
+  tarde: 'Tarde',
+  noite: 'Noite',
+  revezamento: 'Revezamento',
   producao: 'Produção',
   manutencao: 'Manutenção',
   administrativo: 'Administrativo',
@@ -35,6 +41,16 @@ const rotulos: Record<string, string> = {
 function rotulo(valor?: string | null) {
   if (!valor) return 'Não informado';
   return rotulos[valor] ?? valor;
+}
+
+function formatarDataNascimentoComIdade(dataNascimento?: string | null) {
+  if (!dataNascimento) return 'Não informada';
+  const nascimento = new Date(dataNascimento);
+  if (Number.isNaN(nascimento.getTime())) return 'Não informada';
+  const dataFormatada = new Intl.DateTimeFormat('pt-BR').format(nascimento);
+  const idade = idadeEmAnos(dataNascimento);
+  if (idade === null) return dataFormatada;
+  return `${dataFormatada} (${idade} anos)`;
 }
 
 function normalizarBusca(valor?: string | null) {
@@ -104,6 +120,7 @@ type Vaga = {
   id: string;
   area: string;
   requisitos: string;
+  imagemUrl?: string | null;
   ativa: boolean;
 };
 
@@ -132,8 +149,25 @@ export default function EmpresaPage() {
   const [baixandoPdfId, setBaixandoPdfId] = useState<string | null>(null);
   const [candidatos, setCandidatos] = useState<CandidatoEmpresa[]>([]);
   const [vagas, setVagas] = useState<Vaga[]>([]);
+  const [imagemVagaPreview, setImagemVagaPreview] = useState<string | null>(null);
+  const [modalImagemVaga, setModalImagemVaga] = useState<string | null>(null);
+  const inputImagemVagaRef = useRef<HTMLInputElement>(null);
   const formBuscaRef = useRef<HTMLFormElement>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+
+  function handleUploadImagemVaga(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImagemVagaPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  }
 
   function limparFiltros() {
     if (formBuscaRef.current) {
@@ -397,12 +431,15 @@ export default function EmpresaPage() {
         body: JSON.stringify({
           area: String(form.get('area') ?? ''),
           requisitos: String(form.get('requisitos') ?? ''),
+          imagemUrl: imagemVagaPreview || (String(form.get('imagemUrl') ?? '').trim() || null),
         }),
       });
       if (!res.ok) throw new Error('Não foi possível cadastrar a necessidade.');
       formElement.reset();
+      setImagemVagaPreview(null);
+      if (inputImagemVagaRef.current) inputImagemVagaRef.current.value = '';
       await carregarVagas();
-      setMensagem('Necessidade cadastrada. Alertas reversos foram registrados para candidatos compatíveis.');
+      setMensagem('Necessidade cadastrada com sucesso. Alertas reversos foram registrados para candidatos compatíveis.');
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -731,37 +768,96 @@ export default function EmpresaPage() {
               )}
             </section>
 
-            <section className="grid gap-3 rounded-2xl bg-white p-4 shadow-xl shadow-slate-200/70 lg:grid-cols-[360px_1fr]">
+            <section className="grid gap-4 rounded-2xl bg-white p-5 shadow-xl shadow-slate-200/70 lg:grid-cols-[400px_1fr]">
               <form onSubmit={criarVaga} className="grid gap-3">
-                <h3 className="text-lg font-semibold">Cadastrar necessidade</h3>
-                <select name="area" className={inputClasses} defaultValue="producao">
-                  {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                </select>
-                <textarea name="requisitos" className={`${inputClasses} min-h-24`} placeholder="Descreva os requisitos da vaga" />
-                <button disabled={carregando} className="rounded-lg bg-singreen px-5 py-3 text-sm font-semibold text-white disabled:opacity-60">
+                <h3 className="text-lg font-semibold text-slate-900">Cadastrar necessidade</h3>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Área de atuação</label>
+                  <select name="area" className={inputClasses} defaultValue="producao">
+                    {areaPretendidaOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">Requisitos da vaga</label>
+                  <textarea name="requisitos" required className={`${inputClasses} min-h-24`} placeholder="Descreva os requisitos, atribuições e benefícios..." />
+                </div>
+
+                {/* Upload da Imagem de Divulgação da Vaga */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1">
+                    Imagem / Banner da Divulgação <span className="text-slate-400 font-normal">(opcional)</span>
+                  </label>
+                  <input
+                    ref={inputImagemVagaRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleUploadImagemVaga}
+                    className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+                  />
+                  {imagemVagaPreview && (
+                    <div className="relative mt-2 rounded-lg border border-slate-200 p-2 bg-slate-50">
+                      <img src={imagemVagaPreview} alt="Preview do banner" className="max-h-36 w-full rounded object-contain" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setImagemVagaPreview(null);
+                          if (inputImagemVagaRef.current) inputImagemVagaRef.current.value = '';
+                        }}
+                        className="mt-1 text-xs font-semibold text-red-600 hover:underline"
+                      >
+                        ✕ Remover imagem
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <button disabled={carregando} className="rounded-lg bg-singreen px-5 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:opacity-60">
                   Cadastrar necessidade
                 </button>
               </form>
-              <div className="grid content-start gap-2">
-                <h3 className="text-lg font-semibold">Necessidades cadastradas</h3>
+
+              <div className="grid content-start gap-3">
+                <h3 className="text-lg font-semibold text-slate-900">Necessidades cadastradas</h3>
                 {vagas.map((vaga) => (
-                  <div key={vaga.id} className="flex items-start justify-between gap-3 rounded-lg border border-slate-200 p-3 text-sm">
-                    <div className="min-w-0">
-                      <p className="font-semibold">{rotulo(vaga.area)}</p>
-                      <p className="mt-1 text-slate-600 break-words">{vaga.requisitos}</p>
+                  <div key={vaga.id} className="flex flex-col sm:flex-row items-start justify-between gap-4 rounded-xl border border-slate-200 p-3.5 text-sm bg-slate-50/60 hover:bg-white transition shadow-2xs">
+                    {vaga.imagemUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setModalImagemVaga(vaga.imagemUrl!)}
+                        className="group relative shrink-0 overflow-hidden rounded-lg border border-slate-200 hover:opacity-95"
+                        title="Clique para ampliar banner da vaga"
+                      >
+                        <img src={vaga.imagemUrl} alt="Banner da vaga" className="h-20 w-28 object-cover transition group-hover:scale-105" />
+                        <span className="absolute bottom-0 inset-x-0 bg-slate-900/70 text-[9px] text-white py-0.5 text-center font-medium">
+                          🔍 Ampliar
+                        </span>
+                      </button>
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded-md bg-brand-50 px-2 py-0.5 text-xs font-bold text-brand-700 border border-brand-200/60">
+                          {rotulo(vaga.area)}
+                        </span>
+                        {vaga.imagemUrl && (
+                          <span className="rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-800 border border-emerald-200">
+                            Com banner 🖼️
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1.5 text-slate-700 break-words text-xs leading-relaxed whitespace-pre-line">{vaga.requisitos}</p>
                     </div>
                     <button
                       type="button"
                       onClick={() => excluirVaga(vaga.id)}
                       disabled={carregando}
                       title="Apagar necessidade"
-                      className="shrink-0 rounded-md border border-red-200 px-2.5 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
+                      className="shrink-0 rounded-md border border-red-200 px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-50"
                     >
                       Apagar
                     </button>
                   </div>
                 ))}
-                {vagas.length === 0 && <p className="text-sm text-slate-600">Nenhuma necessidade cadastrada.</p>}
+                {vagas.length === 0 && <p className="text-sm text-slate-500 py-3">Nenhuma necessidade cadastrada.</p>}
               </div>
             </section>
 
@@ -860,6 +956,7 @@ export default function EmpresaPage() {
                     <div className="grid gap-2 text-sm text-slate-700 min-w-0">
                       <p className="break-words"><strong>E-mail:</strong> {candidato.email}</p>
                       <p><strong>Telefone:</strong> {candidato.telefone}</p>
+                      <p><strong>Data de nascimento:</strong> {formatarDataNascimentoComIdade(candidato.dataNascimento)}</p>
                       {(candidato.logradouro || candidato.bairro || candidato.numeroEndereco || candidato.cep) && (
                         <p className="break-words">
                           <strong>Endereço:</strong>{' '}
@@ -920,6 +1017,33 @@ export default function EmpresaPage() {
 
         {erro && <p className="mt-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{erro}</p>}
         {mensagem && <p className="mt-4 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{mensagem}</p>}
+
+        {/* Lightbox para imagem da vaga */}
+        {modalImagemVaga && (
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs"
+            onClick={() => setModalImagemVaga(null)}
+          >
+            <div
+              className="relative max-h-[90vh] max-w-3xl overflow-hidden rounded-2xl bg-white p-4 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                <span className="text-sm font-bold text-slate-900">Banner / Divulgação da Vaga</span>
+                <button
+                  type="button"
+                  onClick={() => setModalImagemVaga(null)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  ✕
+                </button>
+              </div>
+              <img src={modalImagemVaga} alt="Banner ampliado da vaga" className="mt-3 max-h-[75vh] w-full rounded-lg object-contain" />
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );

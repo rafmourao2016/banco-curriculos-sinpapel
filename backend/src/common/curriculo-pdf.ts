@@ -4,6 +4,7 @@ type CurriculoPdf = {
   nome: string;
   email: string;
   telefone: string;
+  dataNascimento?: Date | string | null;
   regiao: string;
   uf?: string | null;
   cep?: string | null;
@@ -53,6 +54,8 @@ const rotulosPdf: Record<string, string> = {
   '1_3_anos': '1 a 3 anos',
   '3_5_anos': '3 a 5 anos',
   mais_5_anos: 'Mais de 5 anos',
+  integral: 'Período Integral',
+  periodo_integral: 'Período Integral',
   manha: 'Manhã',
   tarde: 'Tarde',
   noite: 'Noite',
@@ -94,9 +97,23 @@ function lista<T>(valor: T[] | null | undefined): T[] {
 
 function data(valor?: Date | string | null) {
   if (!valor) return 'Atual';
-  const data = valor instanceof Date ? valor : new Date(valor);
-  if (Number.isNaN(data.getTime())) return 'Atual';
-  return new Intl.DateTimeFormat('pt-BR').format(data);
+  const d = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(d.getTime())) return 'Atual';
+  return new Intl.DateTimeFormat('pt-BR').format(d);
+}
+
+function formatarNascimento(valor?: Date | string | null) {
+  if (!valor) return null;
+  const d = valor instanceof Date ? valor : new Date(valor);
+  if (Number.isNaN(d.getTime())) return null;
+  const hoje = new Date();
+  let idade = hoje.getFullYear() - d.getFullYear();
+  const m = hoje.getMonth() - d.getMonth();
+  if (m < 0 || (m === 0 && hoje.getDate() < d.getDate())) {
+    idade--;
+  }
+  const dataFormatada = new Intl.DateTimeFormat('pt-BR').format(d);
+  return `${dataFormatada} (${idade >= 0 ? `${idade} anos` : ''})`;
 }
 
 function habilidades(candidato: CurriculoPdf) {
@@ -108,7 +125,7 @@ function habilidades(candidato: CurriculoPdf) {
 }
 
 function listaTexto(valor?: string[] | null) {
-  const itens = lista(valor).map(texto).filter(Boolean);
+  const itens = lista(valor).map((item) => normalizar(texto(item))).filter(Boolean);
   return itens.length ? itens.join(', ') : 'Não informado';
 }
 
@@ -129,6 +146,10 @@ export async function gerarCurriculoPdf(candidato: CurriculoPdf) {
   doc.fillColor('#111827').font('Helvetica').fontSize(10);
   doc.moveDown(3.2);
   doc.text(`${texto(candidato.email) || 'E-mail não informado'}  |  ${texto(candidato.telefone) || 'Telefone não informado'}`);
+  const nascimentoFormatado = formatarNascimento(candidato.dataNascimento);
+  if (nascimentoFormatado) {
+    doc.text(`Data de nascimento: ${nascimentoFormatado}`);
+  }
   doc.text(`${texto(candidato.regiao) || 'Cidade não informada'}${candidato.uf ? `/${texto(candidato.uf)}` : ''}`);
   const endereco = [
     texto(candidato.logradouro),

@@ -105,7 +105,7 @@ export class CriarCandidatoDto {
   @IsBoolean()
   interesseJovemAprendiz?: boolean;
 
-  @IsIn(['ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000'])
+  @IsIn(['a_combinar', 'ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000'])
   pretensaoSalarial: string;
 
   @IsBoolean()
@@ -115,8 +115,8 @@ export class CriarCandidatoDto {
   anosExperienciaTotal: string;
 
   @IsArray()
-  @ArrayMaxSize(4)
-  @IsIn(['manha', 'tarde', 'noite', 'revezamento'], { each: true })
+  @ArrayMaxSize(5)
+  @IsIn(['integral', 'periodo_integral', 'manha', 'tarde', 'noite', 'revezamento'], { each: true })
   turnos: string[];
 
   @IsBoolean()

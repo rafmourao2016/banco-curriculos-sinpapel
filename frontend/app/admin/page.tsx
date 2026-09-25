@@ -18,6 +18,7 @@ type Candidato = {
   cpf: string;
   email: string;
   telefone: string;
+  dataNascimento?: string | null;
   regiao: string;
   uf?: string | null;
   cep?: string | null;
@@ -119,6 +120,8 @@ const rotulos: Record<string, string> = {
   '1_3_anos': '1 a 3 anos',
   '3_5_anos': '3 a 5 anos',
   mais_5_anos: 'Mais de 5 anos',
+  integral: 'Período Integral',
+  periodo_integral: 'Período Integral',
   manha: 'Manhã',
   tarde: 'Tarde',
   noite: 'Noite',
@@ -1523,6 +1526,10 @@ export default function AdminPage() {
                       <div>
                         <dt className="font-semibold text-slate-500">CPF</dt>
                         <dd className="font-medium">{candidato.cpf}</dd>
+                      </div>
+                      <div>
+                        <dt className="font-semibold text-slate-500">Nascimento</dt>
+                        <dd className="font-medium">{formatarDataSimples(candidato.dataNascimento)}</dd>
                       </div>
                       <div>
                         <dt className="font-semibold text-slate-500">Cadastro</dt>

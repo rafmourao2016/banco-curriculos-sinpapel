@@ -41,6 +41,7 @@ export const anosExperienciaOptions = [
 ] as const;
 
 export const turnoOptions = [
+  { value: 'integral', label: 'Período Integral' },
   { value: 'manha', label: 'Manhã' },
   { value: 'tarde', label: 'Tarde' },
   { value: 'noite', label: 'Noite' },
@@ -117,7 +118,7 @@ export const cadastroSchema = z.object({
   pretensaoSalarial: z.enum(['a_combinar', 'ate_1500', '1501_2500', '2501_3500', '3501_5000', 'acima_5000']),
   experienciaSetorPapel: z.boolean(),
   anosExperienciaTotal: z.enum(['sem_experiencia', 'ate_1_ano', '1_3_anos', '3_5_anos', 'mais_5_anos']),
-  turnos: z.array(z.enum(['manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),
+  turnos: z.array(z.enum(['integral', 'periodo_integral', 'manha', 'tarde', 'noite', 'revezamento'])).min(1, 'Selecione ao menos um turno'),
   inicioImediato: z.boolean(),
   disponibilidadeMudanca: z.boolean(),
   formacoes: z.array(formacaoSchema).max(10, 'Informe no máximo 10 formações'),

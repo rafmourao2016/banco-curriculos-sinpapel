@@ -163,6 +163,7 @@ model VagaNecessidade {
   empresa      Empresa  @relation(fields: [empresaId], references: [id], onDelete: Cascade)
   area         String
   requisitos   String
+  imagemUrl    String?  @map("imagem_url")
   ativa        Boolean  @default(true)
 
   @@map("vagas_necessidade")
