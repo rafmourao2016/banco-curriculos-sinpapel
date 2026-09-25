@@ -353,6 +353,7 @@ export default function EmpresaPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailLimpo, senha, ...(codigo2fa.trim() ? { codigo2fa: codigo2fa.trim() } : {}) }),
+        signal: AbortSignal.timeout(15000),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -378,8 +379,12 @@ export default function EmpresaPage() {
       setCodigo2fa('');
       setExige2fa(false);
       setMensagem('Empresa conectada com sucesso.');
-    } catch (e) {
-      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } catch (e: any) {
+      if (e?.name === 'TimeoutError' || e?.message?.includes('aborted') || e?.message?.includes('Failed to fetch')) {
+        setErro('O servidor da API não respondeu a tempo. Verifique se o serviço está ativo na VPS.');
+      } else {
+        setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+      }
     } finally {
       setCarregando(false);
     }
