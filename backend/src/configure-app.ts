@@ -1,6 +1,10 @@
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { json, urlencoded } from 'express';
 
 export function configureApp(app: INestApplication) {
+  app.use(json({ limit: '15mb' }));
+  app.use(urlencoded({ extended: true, limit: '15mb' }));
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
