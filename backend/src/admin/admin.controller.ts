@@ -47,7 +47,6 @@ export class AdminController {
         { uf: { contains: termo, mode: 'insensitive' } },
         { areaPretendida: { contains: termo, mode: 'insensitive' } },
         { cargoPretendido: { contains: termo, mode: 'insensitive' } },
-        { escolaridade: { contains: termo, mode: 'insensitive' } },
         { pretensaoSalarial: { contains: termo, mode: 'insensitive' } },
         { experiencias: { some: { cargo: { contains: termo, mode: 'insensitive' } } } },
         { experiencias: { some: { area: { contains: termo, mode: 'insensitive' } } } },
