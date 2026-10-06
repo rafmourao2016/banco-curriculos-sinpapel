@@ -802,6 +802,69 @@ export default function AdminPage() {
           </p>
         )}
 
+        {/* Banner de Validação Imediata de Empresas Pendentes */}
+        {empresasPendentesCount > 0 && (
+          <div className="mt-5 rounded-2xl border-2 border-amber-400 bg-amber-50/95 p-5 shadow-sm">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-500 text-2xl text-white shadow-xs">
+                  ⚠️
+                </span>
+                <div>
+                  <h3 className="text-base font-bold text-amber-950">
+                    {empresasPendentesCount} {empresasPendentesCount === 1 ? 'empresa aguardando validação' : 'empresas aguardando validação'} de cadastro!
+                  </h3>
+                  <p className="text-xs text-amber-800">
+                    Novas empresas que se cadastraram e precisam da sua aprovação para acessar os currículos.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => selecionarFiltroEmpresas('pendentes')}
+                className="rounded-lg bg-amber-700 px-4 py-2 text-xs font-bold text-white transition hover:bg-amber-800 shadow-xs shrink-0"
+              >
+                Ver na lista completa &darr;
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {empresas.filter((e) => e.statusAprovacao === 'pendente').map((emp) => (
+                <div key={emp.id} className="rounded-xl border border-amber-300 bg-white p-3.5 shadow-xs flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-bold text-slate-900 truncate text-sm" title={emp.razaoSocial}>{emp.razaoSocial}</p>
+                      <span className="shrink-0 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-300">
+                        Pendente
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">CNPJ: {emp.cnpj}</p>
+                    <p className="text-xs text-slate-600 truncate" title={emp.email}>{emp.email}</p>
+                  </div>
+                  <div className="mt-3 flex items-center gap-2 pt-2.5 border-t border-slate-100">
+                    <button
+                      type="button"
+                      onClick={() => atualizarEmpresa(emp.id, 'aprovada')}
+                      disabled={carregando}
+                      className="flex-1 rounded-lg bg-singreen py-1.5 text-xs font-bold text-white hover:bg-emerald-700 transition"
+                    >
+                      ✓ Aprovar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => atualizarEmpresa(emp.id, 'reprovada')}
+                      disabled={carregando}
+                      className="flex-1 rounded-lg border border-sinred py-1.5 text-xs font-bold text-sinred hover:bg-red-50 transition"
+                    >
+                      ✕ Reprovar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Indicadores Executivos Interativos */}
         <section className="mt-5 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -112,7 +112,8 @@ export class AdminController {
     });
 
     return empresas.map(({ senhaHash: _senhaHash, twoFaSecret: _twoFaSecret, ...empresa }) => {
-      const diasDesdeCadastro = Math.max(0, Math.floor((agora - empresa.dataCadastro.getTime()) / diaMs));
+      const dataCad = empresa.dataCadastro ? new Date(empresa.dataCadastro).getTime() : agora;
+      const diasDesdeCadastro = Math.max(0, Math.floor((agora - dataCad) / diaMs));
       return {
         ...empresa,
         diasDesdeCadastro,
