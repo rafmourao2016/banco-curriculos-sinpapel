@@ -619,6 +619,32 @@ export default function EmpresaPage() {
     }
   }
 
+  async function removerStatus(candidatoId: string) {
+    setErro(null);
+    setMensagem(null);
+    setCarregando(true);
+    try {
+      const res = await fetch(`${API_URL}/empresas/candidatos/${candidatoId}/status`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message ?? 'Não foi possível remover o status.');
+      }
+      setCandidatos((atuais) =>
+        atuais.map((candidato) =>
+          candidato.id === candidatoId ? { ...candidato, statusEmpresa: null, comentarioEmpresa: null } : candidato
+        )
+      );
+      setMensagem('Status do candidato removido.');
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro inesperado.');
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   function formatarNomeArquivoCurriculo(nome: string) {
     const nomeFormatado = (nome || 'candidato')
       .trim()
@@ -1177,7 +1203,20 @@ export default function EmpresaPage() {
                         </p>
                       )}
                       <p><strong>CNH:</strong> {candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Não'}</p>
-                      <p><strong>Status:</strong> {candidato.statusEmpresa ? rotulo(candidato.statusEmpresa) : 'Sem status'}</p>
+                      <div className="flex items-center justify-between gap-2">
+                        <p><strong>Status:</strong> {candidato.statusEmpresa ? rotulo(candidato.statusEmpresa) : 'Sem status'}</p>
+                        {candidato.statusEmpresa && (
+                          <button
+                            type="button"
+                            onClick={() => removerStatus(candidato.id)}
+                            disabled={carregando}
+                            title="Remover status e voltar para 'Sem status'"
+                            className="text-xs font-semibold text-red-600 hover:text-red-800 hover:underline cursor-pointer"
+                          >
+                            ✕ Remover status
+                          </button>
+                        )}
+                      </div>
                       {candidato.comentarioEmpresa && <p className="break-words"><strong>Comentário:</strong> {candidato.comentarioEmpresa}</p>}
                       <div className="grid grid-cols-2 gap-2 pt-1">
                         {[
@@ -1185,11 +1224,19 @@ export default function EmpresaPage() {
                           ['EM_PROCESSO_SELETIVO', 'Em processo'],
                           ['CONTRATADO', 'Contratado'],
                           ['NAO_COMPATIVEL', 'Não compatível'],
-                        ].map(([valor, label]) => (
-                          <button key={valor} type="button" onClick={() => atualizarStatus(candidato.id, valor)} className={`rounded-lg border px-3 py-2 text-xs font-semibold ${candidato.statusEmpresa === valor ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-slate-300 text-slate-700'}`}>
-                            {label}
-                          </button>
-                        ))}
+                        ].map(([valor, label]) => {
+                          const isSelected = candidato.statusEmpresa === valor;
+                          return (
+                            <button
+                              key={valor}
+                              type="button"
+                              onClick={() => isSelected ? removerStatus(candidato.id) : atualizarStatus(candidato.id, valor)}
+                              className={`rounded-lg border px-3 py-2 text-xs font-semibold transition cursor-pointer ${isSelected ? 'border-brand-600 bg-brand-50 text-brand-700 ring-1 ring-brand-500/30' : 'border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
                       </div>
                       <button
                         type="button"

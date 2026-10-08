@@ -61,6 +61,12 @@ export class EmpresasController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Delete('candidatos/:id/status')
+  removerStatus(@Req() req: any, @Param('id') candidatoId: string) {
+    return this.empresasService.removerStatusCandidato(req.empresaId, candidatoId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Post('vagas')
   criarVaga(@Req() req: any, @Body() dto: { area: string; requisitos: string; imagemUrl?: string }) {
     return this.empresasService.criarVaga(req.empresaId, dto);

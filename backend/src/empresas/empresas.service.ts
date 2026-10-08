@@ -364,6 +364,14 @@ export class EmpresasService {
     return registro;
   }
 
+  async removerStatusCandidato(empresaId: string, candidatoId: string) {
+    await this.validarEmpresa(empresaId);
+    await this.prisma.statusContratacao.deleteMany({
+      where: { candidatoId, empresaId },
+    });
+    return { ok: true, mensagem: 'Status removido com sucesso.' };
+  }
+
   async criarVaga(empresaId: string, dto: { area: string; requisitos: string; imagemUrl?: string }) {
     await this.validarEmpresa(empresaId);
     const vaga = await this.prisma.vagaNecessidade.create({
