@@ -128,6 +128,10 @@ export class EmpresasService {
       cidades?: string;
       semantica?: string;
       tipoOportunidade?: string;
+      pcd?: string;
+      menorAprendiz?: string;
+      disponibilidadeMudanca?: string;
+      faixaEtaria?: string;
     },
   ) {
     await this.validarEmpresa(empresaId);
@@ -167,7 +171,15 @@ export class EmpresasService {
       and.push({ OR: cidades.map((cidade) => ({ regiao: { contains: cidade, mode: 'insensitive' as const } })) });
     }
 
-    if (filtros.tipoOportunidade === 'jovem_aprendiz') {
+    if (filtros.pcd === 'sim' || filtros.pcd === 'true') {
+      and.push({ pcd: true });
+    }
+
+    if (filtros.disponibilidadeMudanca === 'sim' || filtros.disponibilidadeMudanca === 'true') {
+      and.push({ disponibilidadeMudanca: true });
+    }
+
+    if (filtros.menorAprendiz === 'sim' || filtros.menorAprendiz === 'true' || filtros.tipoOportunidade === 'jovem_aprendiz') {
       const hoje = new Date();
       const dataMax = new Date(hoje.getFullYear() - 14, hoje.getMonth(), hoje.getDate());
       const dataMin = new Date(hoje.getFullYear() - 25, hoje.getMonth(), hoje.getDate());
@@ -193,6 +205,27 @@ export class EmpresasService {
         ],
       });
     }
+
+    if (filtros.faixaEtaria) {
+      const hoje = new Date();
+      if (filtros.faixaEtaria === 'ate_17') {
+        const limite18 = new Date(hoje.getFullYear() - 18, hoje.getMonth(), hoje.getDate());
+        and.push({ dataNascimento: { gt: limite18 } });
+      } else if (filtros.faixaEtaria === '18_a_50') {
+        const limite18 = new Date(hoje.getFullYear() - 18, hoje.getMonth(), hoje.getDate());
+        const limite51 = new Date(hoje.getFullYear() - 51, hoje.getMonth(), hoje.getDate());
+        and.push({
+          dataNascimento: {
+            lte: limite18,
+            gte: limite51,
+          },
+        });
+      } else if (filtros.faixaEtaria === 'acima_50') {
+        const limite51 = new Date(hoje.getFullYear() - 51, hoje.getMonth(), hoje.getDate());
+        and.push({ dataNascimento: { lt: limite51 } });
+      }
+    }
+
     if (termo && !idsSemanticos) {
       and.push({
         OR: [
@@ -407,9 +440,60 @@ export class EmpresasService {
     await this.validarEmpresa(empresaId);
     return this.prisma.vagaNecessidade.findMany({
       where: { empresaId },
+      include: {
+        _count: {
+          select: { candidaturas: true },
+        },
+      },
       orderBy: { id: 'desc' },
       take: 50,
     });
+  }
+
+  async listarCandidaturasVaga(empresaId: string, vagaId: string) {
+    await this.validarEmpresa(empresaId);
+    const vaga = await this.prisma.vagaNecessidade.findFirst({
+      where: { id: vagaId, empresaId },
+    });
+    if (!vaga) throw new NotFoundException('Necessidade não encontrada.');
+
+    const candidaturas = await this.prisma.candidaturaVaga.findMany({
+      where: { vagaId },
+      include: {
+        candidato: {
+          include: {
+            experiencias: { orderBy: { dataInicio: 'desc' } },
+            formacoes: true,
+            habilidades: { include: { habilidade: true } },
+          },
+        },
+      },
+      orderBy: { dataEnvio: 'desc' },
+    });
+
+    return candidaturas.map((c) => ({
+      id: c.id,
+      mensagem: c.mensagem,
+      dataEnvio: c.dataEnvio,
+      candidato: {
+        id: c.candidato.id,
+        nome: c.candidato.nome,
+        email: c.candidato.email,
+        telefone: c.candidato.telefone,
+        cidade: c.candidato.regiao,
+        uf: c.candidato.uf,
+        cargoPretendido: c.candidato.cargoPretendido,
+        areaPretendida: c.candidato.areaPretendida,
+        escolaridade: c.candidato.escolaridade,
+        pcd: c.candidato.pcd,
+        pcdObservacao: c.candidato.pcdObservacao,
+        disponibilidadeMudanca: c.candidato.disponibilidadeMudanca,
+        anosExperienciaTotal: c.candidato.anosExperienciaTotal,
+        habilidades: c.candidato.habilidades.map((h) => h.habilidade.nome),
+        experiencias: c.candidato.experiencias,
+        formacoes: c.candidato.formacoes,
+      },
+    }));
   }
 
   async excluirVaga(empresaId: string, vagaId: string) {
@@ -471,7 +555,7 @@ export class EmpresasService {
     }
 
     if (!vagaTexto) {
-      vagaTexto = 'Vaga padrão no setor industrial de papel, celulose e embalagens (Operação/Manutenção/Logística/Qualidade/Administrativo).';
+      vagaTexto = 'Vaga padrão no setor industrial de papel, papelão ondulado e embalagens (Operação/Manutenção/Logística/Qualidade/Administrativo).';
     }
 
     const candidatoTexto = [

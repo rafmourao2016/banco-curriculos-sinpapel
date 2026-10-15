@@ -79,6 +79,12 @@ export class EmpresasController {
   }
 
   @UseGuards(JwtAuthGuard)
+  @Get('vagas/:id/candidaturas')
+  listarCandidaturasVaga(@Req() req: any, @Param('id') vagaId: string) {
+    return this.empresasService.listarCandidaturasVaga(req.empresaId, vagaId);
+  }
+
+  @UseGuards(JwtAuthGuard)
   @Delete('vagas/:id')
   excluirVaga(@Req() req: any, @Param('id') vagaId: string) {
     return this.empresasService.excluirVaga(req.empresaId, vagaId);

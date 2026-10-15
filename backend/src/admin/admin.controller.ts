@@ -1,4 +1,4 @@
-import { BadRequestException, Body, ConflictException, Controller, Delete, ForbiddenException, Get, Headers, Header, Param, Patch, Post, Query, Res } from '@nestjs/common';
+import { BadRequestException, Body, ConflictException, Controller, Delete, ForbiddenException, Get, Headers, Header, NotFoundException, Param, Patch, Post, Query, Res } from '@nestjs/common';
 import { createHash, randomBytes } from 'crypto';
 import { Response } from 'express';
 import { PrismaService } from '../common/prisma.service';
@@ -89,6 +89,41 @@ export class AdminController {
     this.validarToken(token);
     await this.prisma.candidato.delete({ where: { id } });
     return { mensagem: 'Dados do candidato excluidos conforme solicitacao LGPD.' };
+  }
+
+  @Patch('candidatos/:id/status-ativo')
+  async alternarStatusAtivo(
+    @Headers('x-admin-token') token: string | undefined,
+    @Param('id') id: string,
+    @Body('ativo') ativo: boolean,
+  ) {
+    this.validarToken(token);
+    const candidato = await this.prisma.candidato.findUnique({ where: { id } });
+    if (!candidato) throw new NotFoundException('Candidato nao encontrado.');
+
+    if (ativo) {
+      await this.prisma.statusContratacao.deleteMany({
+        where: { candidatoId: id, status: 'CONTRATADO' },
+      });
+      await this.prisma.candidato.update({
+        where: { id },
+        data: {
+          ativo: true,
+          dataInativacao: null,
+          dataUltimaRevalidacao: new Date(),
+        },
+      });
+      return { ok: true, mensagem: 'Currículo reativado com sucesso.', ativo: true };
+    } else {
+      await this.prisma.candidato.update({
+        where: { id },
+        data: {
+          ativo: false,
+          dataInativacao: new Date(),
+        },
+      });
+      return { ok: true, mensagem: 'Currículo desativado com sucesso.', ativo: false };
+    }
   }
 
   @Get('empresas')

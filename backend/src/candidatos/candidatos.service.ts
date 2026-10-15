@@ -310,6 +310,67 @@ export class CandidatosService {
     );
   }
 
+  async listarVagasDisponiveis(candidatoId: string) {
+    const vagas = await this.prisma.vagaNecessidade.findMany({
+      where: { ativa: true },
+      include: {
+        empresa: {
+          select: {
+            razaoSocial: true,
+          },
+        },
+        candidaturas: {
+          where: { candidatoId },
+          select: { id: true, dataEnvio: true, mensagem: true },
+        },
+      },
+      orderBy: { id: 'desc' },
+      take: 50,
+    });
+
+    return vagas.map((v) => ({
+      id: v.id,
+      area: v.area,
+      requisitos: v.requisitos,
+      imagemUrl: v.imagemUrl,
+      empresaNome: v.empresa.razaoSocial,
+      jaCandidatou: v.candidaturas.length > 0,
+      candidatura: v.candidaturas[0] || null,
+    }));
+  }
+
+  async candidatarVaga(candidatoId: string, vagaId: string, mensagem: string) {
+    if (!mensagem?.trim()) {
+      throw new BadRequestException('A mensagem de apresentação é obrigatória.');
+    }
+
+    const vaga = await this.prisma.vagaNecessidade.findFirst({
+      where: { id: vagaId, ativa: true },
+    });
+    if (!vaga) {
+      throw new NotFoundException('Vaga não encontrada ou inativa.');
+    }
+
+    const existente = await this.prisma.candidaturaVaga.findUnique({
+      where: {
+        vagaId_candidatoId: { vagaId, candidatoId },
+      },
+    });
+    if (existente) {
+      throw new ConflictException('Você já se candidatou a esta vaga.');
+    }
+
+    const candidatura = await this.prisma.candidaturaVaga.create({
+      data: {
+        vagaId,
+        candidatoId,
+        mensagem: mensagem.trim(),
+      },
+    });
+
+    return { ok: true, candidatura };
+  }
+
   private async buscarNotificacaoRevalidacao(token: string) {
     if (!token?.trim()) {
       throw new BadRequestException('Token de revalidacao nao informado.');

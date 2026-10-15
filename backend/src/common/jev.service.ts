@@ -2,6 +2,8 @@ import { Injectable, Logger } from '@nestjs/common';
 
 export type JevMatchResult = {
   scoreGeral: number; // 0 a 100%
+  classificacaoEstrelas: '1/5' | '2/5' | '3/5' | '4/5' | '5/5';
+  classificacaoRotulo: string;
   nivelAderencia: string; // 'Excelente' | 'Alta' | 'Média' | 'Baixa'
   requisitosTecnicosNoul: number; // 0.0 a 1.0
   atendeRequisitosTecnicos: boolean;
@@ -12,6 +14,17 @@ export type JevMatchResult = {
   resumoDecisao: string;
   detalhes?: any;
 };
+
+export function calcularClassificacaoEstrelas(score: number): {
+  classificacaoEstrelas: '1/5' | '2/5' | '3/5' | '4/5' | '5/5';
+  classificacaoRotulo: string;
+} {
+  if (score <= 25) return { classificacaoEstrelas: '1/5', classificacaoRotulo: 'Match 1/5 (Compatibilidade Inicial)' };
+  if (score <= 50) return { classificacaoEstrelas: '2/5', classificacaoRotulo: 'Match 2/5 (Compatibilidade Básica)' };
+  if (score <= 70) return { classificacaoEstrelas: '3/5', classificacaoRotulo: 'Match 3/5 (Média Compatibilidade)' };
+  if (score <= 85) return { classificacaoEstrelas: '4/5', classificacaoRotulo: 'Match 4/5 (Alta Compatibilidade)' };
+  return { classificacaoEstrelas: '5/5', classificacaoRotulo: 'Match 5/5 (Excelente Compatibilidade)' };
+}
 
 @Injectable()
 export class JevService {
@@ -27,7 +40,7 @@ export class JevService {
       return this.fallbackHeuristico(candidatoTexto, vagaTexto);
     }
 
-    const state = `[PERFIL DO CANDIDATO]:\n${candidatoTexto}\n\n[REQUISITOS DA VAGA / OPORTUNIDADE]:\n${vagaTexto}`;
+    const state = `[PERFIL DO CANDIDATO]:\n${candidatoTexto}\n\n[REQUISITOS DA VAGA NO SETOR DE PAPEL, PAPELÃO E EMBALAGENS]:\n${vagaTexto}`;
 
     const payload = {
       model: this.model,
@@ -35,7 +48,7 @@ export class JevService {
       questions: {
         aderencia_geral: {
           type: 'score',
-          instructions: 'Qual o nível de aderência geral deste candidato para a vaga industrial anunciada?',
+          instructions: 'Qual o nível de aderência geral deste candidato para a vaga industrial no setor de papel, papelão e embalagens anunciada?',
           criteria: ['Baixa aderência', 'Média aderência', 'Alta aderência', 'Excelente aderência'],
         },
         requisitos_tecnicos: {
@@ -115,10 +128,13 @@ export class JevService {
         desqualificado: '❌ Não compatível com esta vaga',
       };
 
-      const resumo = `${scorePercentual}% de aderência (${nivelAderencia}). Senioridade: ${senioridadeRotulos[senioridade] || senioridade}. Recomendação: ${recomendacaoRotulos[recomendacao] || recomendacao}.`;
+      const classificacao = calcularClassificacaoEstrelas(scorePercentual);
+      const resumo = `${scorePercentual}% de aderência (${classificacao.classificacaoRotulo}). Recomendação: ${recomendacaoRotulos[recomendacao] || recomendacao}.`;
 
       return {
         scoreGeral: scorePercentual,
+        classificacaoEstrelas: classificacao.classificacaoEstrelas,
+        classificacaoRotulo: classificacao.classificacaoRotulo,
         nivelAderencia,
         requisitosTecnicosNoul: Math.round(noulTecnico * 100) / 100,
         atendeRequisitosTecnicos: noulTecnico >= 0.5,
@@ -146,9 +162,12 @@ export class JevService {
     const ratio = palavrasVaga.length > 0 ? matches / palavrasVaga.length : 0.5;
     const score = Math.min(95, Math.max(30, Math.round(ratio * 70 + 30)));
     const nivel = score >= 80 ? 'Excelente' : score >= 65 ? 'Alta' : score >= 45 ? 'Média' : 'Baixa';
+    const classificacao = calcularClassificacaoEstrelas(score);
 
     return {
       scoreGeral: score,
+      classificacaoEstrelas: classificacao.classificacaoEstrelas,
+      classificacaoRotulo: classificacao.classificacaoRotulo,
       nivelAderencia: nivel,
       requisitosTecnicosNoul: Math.round(ratio * 100) / 100,
       atendeRequisitosTecnicos: score >= 50,
@@ -156,7 +175,7 @@ export class JevService {
       senioridadeRotulo: 'Pleno / Operacional',
       recomendacao: score >= 75 ? 'entrevistar' : 'avaliar_com_ressalvas',
       recomendacaoRotulo: score >= 75 ? '✅ Convocação Imediata para Entrevista' : '⚠️ Compatível - Avaliar na Entrevista',
-      resumoDecisao: `${score}% de aderência estimada (${nivel}).`,
+      resumoDecisao: `${score}% de aderência estimada (${classificacao.classificacaoRotulo}).`,
     };
   }
 }

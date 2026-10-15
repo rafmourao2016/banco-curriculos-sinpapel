@@ -457,6 +457,35 @@ export default function AdminPage() {
     }
   }
 
+  async function alterarStatusCandidato(candidatoId: string, novoAtivo: boolean) {
+    const acao = novoAtivo ? 'reativar' : 'desativar';
+    if (!window.confirm(`Tem certeza que deseja ${acao} este currículo no banco de talentos?`)) return;
+
+    setErro(null);
+    setMensagem(null);
+    try {
+      const res = await fetch(`${API_URL}/admin/candidatos/${candidatoId}/status-ativo`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': token,
+        },
+        body: JSON.stringify({ ativo: novoAtivo }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.message || `Não foi possível ${acao} o currículo.`);
+      }
+      setMensagem(`Currículo ${novoAtivo ? 'reativado' : 'desativado'} com sucesso!`);
+      setCandidatos((prev) =>
+        prev.map((c) => (c.id === candidatoId ? { ...c, ativo: novoAtivo } : c))
+      );
+      void carregarIndicadores();
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : 'Erro ao alterar status do currículo.');
+    }
+  }
+
   async function executarRevalidacao() {
     setErro(null);
     setMensagem(null);
@@ -1598,17 +1627,36 @@ export default function AdminPage() {
                       </div>
 
                       <div className="mt-4 flex flex-wrap gap-2">
+                        {candidato.ativo ? (
+                          <button
+                            type="button"
+                            onClick={() => alterarStatusCandidato(candidato.id, false)}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition cursor-pointer"
+                            title="Desativar currículo temporariamente"
+                          >
+                            Desativar currículo
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => alterarStatusCandidato(candidato.id, true)}
+                            className="rounded-lg border border-emerald-600 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+                            title="Reativar currículo no banco de talentos"
+                          >
+                            ✓ Reativar currículo
+                          </button>
+                        )}
                         <button
                           type="button"
                           onClick={() => criarComunicacao(candidato.id)}
-                          className="rounded-lg border border-brand-600 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50"
+                          className="rounded-lg border border-brand-600 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50 cursor-pointer"
                         >
                           Registrar comunicação
                         </button>
                         <button
                           type="button"
                           onClick={() => excluirCandidato(candidato.id)}
-                          className="rounded-lg border border-sinred px-3 py-1.5 text-xs font-semibold text-sinred hover:bg-red-50"
+                          className="rounded-lg border border-sinred px-3 py-1.5 text-xs font-semibold text-sinred hover:bg-red-50 cursor-pointer"
                         >
                           Excluir LGPD
                         </button>

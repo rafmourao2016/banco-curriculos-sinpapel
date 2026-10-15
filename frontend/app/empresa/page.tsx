@@ -74,6 +74,13 @@ function idadeEmAnos(dataNascimento?: string | null) {
   return idade;
 }
 
+function formatarDataHora(valor?: string | null) {
+  if (!valor) return '';
+  const d = new Date(valor);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' }).format(d);
+}
+
 type CandidatoEmpresa = {
   id: string;
   nome: string;
@@ -96,6 +103,9 @@ type CandidatoEmpresa = {
   comentarioEmpresa?: string | null;
   habilidades: string[];
   anosExperienciaTotal?: string | null;
+  pcd?: boolean | null;
+  pcdObservacao?: string | null;
+  disponibilidadeMudanca?: boolean | null;
   experiencias: Array<{ cargo: string; area?: string | null }>;
   formacoes?: Array<{ curso?: string | null; nivel?: string | null }>;
 };
@@ -123,6 +133,33 @@ type Vaga = {
   requisitos: string;
   imagemUrl?: string | null;
   ativa: boolean;
+  _count?: {
+    candidaturas: number;
+  };
+};
+
+type CandidaturaItem = {
+  id: string;
+  mensagem: string;
+  dataEnvio: string;
+  candidato: {
+    id: string;
+    nome: string;
+    email: string;
+    telefone: string;
+    cidade: string;
+    uf?: string | null;
+    cargoPretendido?: string | null;
+    areaPretendida?: string | null;
+    escolaridade?: string | null;
+    pcd?: boolean | null;
+    pcdObservacao?: string | null;
+    disponibilidadeMudanca?: boolean | null;
+    anosExperienciaTotal?: string | null;
+    habilidades: string[];
+    experiencias: Array<{ cargo: string; empresa?: string; descricao?: string }>;
+    formacoes: Array<{ curso?: string; instituicao?: string }>;
+  };
 };
 
 type JevMatchInfo = {
@@ -135,6 +172,8 @@ type JevMatchInfo = {
   recomendacao: 'entrevistar' | 'avaliar_com_ressalvas' | 'banco_de_talentos' | 'desqualificado';
   recomendacaoRotulo: string;
   resumoDecisao: string;
+  classificacaoEstrelas?: '1/5' | '2/5' | '3/5' | '4/5' | '5/5';
+  classificacaoRotulo?: string;
 };
 
 export default function EmpresaPage() {
@@ -168,9 +207,30 @@ export default function EmpresaPage() {
   const [avaliandoJevId, setAvaliandoJevId] = useState<string | null>(null);
   const [resultadosJev, setResultadosJev] = useState<Record<string, JevMatchInfo>>({});
   const [vagaSelecionadaJev, setVagaSelecionadaJev] = useState<string>('');
+  const [modalCandidaturasVaga, setModalCandidaturasVaga] = useState<Vaga | null>(null);
+  const [candidaturasVaga, setCandidaturasVaga] = useState<CandidaturaItem[]>([]);
+  const [carregandoCandidaturas, setCarregandoCandidaturas] = useState(false);
   const inputImagemVagaRef = useRef<HTMLInputElement>(null);
   const formBuscaRef = useRef<HTMLFormElement>(null);
   const [formResetKey, setFormResetKey] = useState(0);
+
+  async function abrirModalCandidaturas(vaga: Vaga) {
+    setModalCandidaturasVaga(vaga);
+    setCarregandoCandidaturas(true);
+    setCandidaturasVaga([]);
+    try {
+      const res = await fetch(`${API_URL}/empresas/vagas/${vaga.id}/candidaturas`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Não foi possível carregar as candidaturas desta vaga.');
+      const data = await res.json();
+      setCandidaturasVaga(data);
+    } catch (e: any) {
+      alert(e.message || 'Erro ao carregar candidaturas.');
+    } finally {
+      setCarregandoCandidaturas(false);
+    }
+  }
 
   useEffect(() => {
     setMontado(true);
@@ -666,11 +726,15 @@ export default function EmpresaPage() {
     try {
       const params = new URLSearchParams();
       const tipoOportunidade = String(form.get('tipoOportunidade') ?? '').trim();
-      ['q', 'tipoOportunidade', 'area', 'uf', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos'].forEach((campo) => {
+      const menorAprendiz = Boolean(form.get('menorAprendiz'));
+      ['q', 'tipoOportunidade', 'area', 'uf', 'regiao', 'cidades', 'escolaridade', 'experiencia', 'cnh', 'turno', 'inicioImediato', 'pretensaoSalarial', 'cursos', 'faixaEtaria'].forEach((campo) => {
         const valor = String(form.get(campo) ?? '').trim();
         if (valor) params.set(campo, valor);
       });
       if (form.get('semantica')) params.set('semantica', '1');
+      if (form.get('pcd')) params.set('pcd', 'sim');
+      if (menorAprendiz) params.set('menorAprendiz', 'sim');
+      if (form.get('disponibilidadeMudanca')) params.set('disponibilidadeMudanca', 'sim');
       const res = await fetch(`${API_URL}/empresas/candidatos?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -684,7 +748,7 @@ export default function EmpresaPage() {
         const detalhe = Array.isArray(data.message) ? data.message[0] : data.message;
         throw new Error(detalhe ?? 'Não foi possível consultar candidatos.');
       }
-      setCandidatos(tipoOportunidade === 'jovem_aprendiz' ? data.filter(perfilJovemAprendiz) : data);
+      setCandidatos(tipoOportunidade === 'jovem_aprendiz' || menorAprendiz ? data.filter(perfilJovemAprendiz) : data);
     } catch (e) {
       setErro(e instanceof Error ? e.message : 'Erro inesperado.');
     } finally {
@@ -1004,6 +1068,15 @@ export default function EmpresaPage() {
                         )}
                       </div>
                       <p className="mt-1.5 text-slate-700 break-words text-xs leading-relaxed whitespace-pre-line">{vaga.requisitos}</p>
+                      <div className="mt-2.5 flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => abrirModalCandidaturas(vaga)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-800 hover:bg-brand-100 transition cursor-pointer shadow-2xs"
+                        >
+                          <span>📩</span> Candidatos interessados ({vaga._count?.candidaturas ?? 0})
+                        </button>
+                      </div>
                     </div>
                     <button
                       type="button"
@@ -1057,11 +1130,31 @@ export default function EmpresaPage() {
                 <option value="">Pretensão salarial</option>
                 {pretensaoSalarialOptions.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
               </select>
-              <input name="cursos" className={inputClasses} placeholder="Cursos/certificações separados por vírgula" />
-              <label className="flex items-center gap-3 rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm text-slate-700 sm:col-span-2 lg:col-span-6">
-                <input name="semantica" type="checkbox" value="1" className="h-5 w-5" />
-                Usar busca semântica
-              </label>
+              <select name="faixaEtaria" className={inputClasses} defaultValue="">
+                <option value="">Faixa etária (Todas)</option>
+                <option value="ate_17">Até 17 anos</option>
+                <option value="18_a_50">De 18 a 50 anos</option>
+                <option value="acima_50">Acima de 50 anos</option>
+              </select>
+              <input name="cursos" className={inputClasses} placeholder="Cursos/certificações (ex: empilhadeira)" />
+              <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50/80 p-3 sm:col-span-2 lg:col-span-6 text-sm text-slate-700">
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-brand-700">
+                  <input name="semantica" type="checkbox" value="1" className="h-4 w-4 rounded text-brand-600 focus:ring-brand-500" />
+                  <span>🧠 Busca semântica (IA)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-brand-700">
+                  <input name="pcd" type="checkbox" value="sim" className="h-4 w-4 rounded text-brand-600 focus:ring-brand-500" />
+                  <span>♿ Apenas PCD</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-brand-700">
+                  <input name="menorAprendiz" type="checkbox" value="sim" className="h-4 w-4 rounded text-brand-600 focus:ring-brand-500" />
+                  <span>🎓 Menor / Jovem Aprendiz</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer font-medium hover:text-brand-700">
+                  <input name="disponibilidadeMudanca" type="checkbox" value="sim" className="h-4 w-4 rounded text-brand-600 focus:ring-brand-500" />
+                  <span>🚚 Disponível para mudar de cidade</span>
+                </label>
+              </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:col-span-2 lg:col-span-6">
                 <button
                   type="submit"
@@ -1096,7 +1189,7 @@ export default function EmpresaPage() {
                         onChange={(e) => setVagaSelecionadaJev(e.target.value)}
                         className="rounded-lg border border-brand-300 bg-white px-2.5 py-1 text-xs font-semibold text-brand-900 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/10"
                       >
-                        <option value="">Geral (Setor de Papel e Celulose)</option>
+                        <option value="">Geral (Setor de Papel, Papelão e Embalagens)</option>
                         {vagas.map((vaga) => (
                           <option key={vaga.id} value={vaga.id}>
                             {vaga.area}
@@ -1116,7 +1209,7 @@ export default function EmpresaPage() {
                         <h3 className="text-xl font-semibold text-slate-950">{candidato.nome}</h3>
                         {resultadosJev[candidato.id] && (
                           <span className="rounded-full bg-emerald-700 px-2.5 py-0.5 text-xs font-extrabold text-white shadow-2xs">
-                            ⚡ {resultadosJev[candidato.id].scoreGeral}% Match Jev
+                            ⚡ {resultadosJev[candidato.id].classificacaoEstrelas ?? '3/5'} ⭐ ({resultadosJev[candidato.id].scoreGeral}%) Match Jev
                           </span>
                         )}
                       </div>
@@ -1126,7 +1219,17 @@ export default function EmpresaPage() {
                       <div className="mt-3 flex flex-wrap gap-2">
                         {candidato.interesseJovemAprendiz && (
                           <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200/60">
-                            Jovem Aprendiz
+                            🎓 Jovem Aprendiz
+                          </span>
+                        )}
+                        {candidato.pcd && (
+                          <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-800 border border-blue-200/60">
+                            ♿ PCD {candidato.pcdObservacao ? `(${candidato.pcdObservacao})` : ''}
+                          </span>
+                        )}
+                        {candidato.disponibilidadeMudanca && (
+                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 border border-emerald-200/60">
+                            🚚 Mudar de cidade
                           </span>
                         )}
                         {candidato.habilidades
@@ -1148,8 +1251,8 @@ export default function EmpresaPage() {
                               <strong className="font-extrabold text-emerald-900">Parecer da IA Jev</strong>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="rounded-md bg-white border border-emerald-200 px-2 py-0.5 font-bold text-emerald-800">
-                                {resultadosJev[candidato.id].senioridadeRotulo}
+                              <span className="rounded-md bg-white border border-emerald-300 px-2.5 py-0.5 font-bold text-emerald-900 shadow-2xs">
+                                Match {resultadosJev[candidato.id].classificacaoEstrelas ?? '3/5'} ⭐ ({resultadosJev[candidato.id].classificacaoRotulo ?? resultadosJev[candidato.id].senioridadeRotulo})
                               </span>
                             </div>
                           </div>
@@ -1203,6 +1306,12 @@ export default function EmpresaPage() {
                         </p>
                       )}
                       <p><strong>CNH:</strong> {candidato.possuiCnh ? candidato.categoriaCnh || 'Sim' : 'Não'}</p>
+                      {candidato.pcd && (
+                        <p className="text-blue-900 font-medium"><strong>PCD:</strong> Sim {candidato.pcdObservacao ? `(${candidato.pcdObservacao})` : ''}</p>
+                      )}
+                      {candidato.disponibilidadeMudanca && (
+                        <p className="text-emerald-900 font-medium"><strong>Disponibilidade para mudança:</strong> Sim (muda de cidade)</p>
+                      )}
                       <div className="flex items-center justify-between gap-2">
                         <p><strong>Status:</strong> {candidato.statusEmpresa ? rotulo(candidato.statusEmpresa) : 'Sem status'}</p>
                         {candidato.statusEmpresa && (
@@ -1293,6 +1402,117 @@ export default function EmpresaPage() {
                 </button>
               </div>
               <img src={modalImagemVaga} alt="Banner ampliado da vaga" className="mt-3 max-h-[75vh] w-full rounded-lg object-contain" />
+            </div>
+          </div>,
+          document.body
+        )}
+
+        {/* Modal de Candidatos Interessados / Apresentações da Vaga */}
+        {montado && modalCandidaturasVaga && createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-xs overflow-y-auto"
+            onClick={() => setModalCandidaturasVaga(null)}
+          >
+            <div
+              className="relative my-auto w-full max-w-2xl max-h-[90vh] overflow-hidden rounded-2xl bg-white p-5 shadow-2xl border border-slate-200 flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between pb-3 border-b border-slate-200">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-md bg-brand-50 px-2.5 py-0.5 text-xs font-bold text-brand-800 border border-brand-200">
+                      {rotulo(modalCandidaturasVaga.area)}
+                    </span>
+                    <h3 className="text-base font-bold text-slate-950">Candidatos Interessados</h3>
+                  </div>
+                  <p className="mt-1 text-xs text-slate-500 line-clamp-1">{modalCandidaturasVaga.requisitos}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setModalCandidaturasVaga(null)}
+                  className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4 flex-1 overflow-y-auto pr-1 space-y-3">
+                {carregandoCandidaturas && (
+                  <p className="text-center py-8 text-sm text-slate-500">Carregando apresentações dos candidatos...</p>
+                )}
+
+                {!carregandoCandidaturas && candidaturasVaga.length === 0 && (
+                  <div className="text-center py-10 rounded-xl border border-dashed border-slate-200 bg-slate-50">
+                    <span className="text-3xl">📭</span>
+                    <p className="mt-2 text-sm font-semibold text-slate-800">Nenhum candidato se apresentou para esta vaga ainda.</p>
+                    <p className="text-xs text-slate-500 mt-1">Assim que candidatos enviarem apresentações, elas aparecerão aqui.</p>
+                  </div>
+                )}
+
+                {!carregandoCandidaturas && candidaturasVaga.map((item) => (
+                  <div
+                    key={item.id}
+                    className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs transition hover:border-brand-300"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-b border-slate-100 pb-2.5">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <strong className="text-slate-950 text-sm font-bold">{item.candidato.nome}</strong>
+                        {item.candidato.pcd && (
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-800 border border-blue-200">
+                            ♿ PCD
+                          </span>
+                        )}
+                        {item.candidato.disponibilidadeMudanca && (
+                          <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-800 border border-emerald-200">
+                            🚚 Mudar de cidade
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[11px] font-medium text-slate-500">
+                        {formatarDataHora(item.dataEnvio)}
+                      </span>
+                    </div>
+
+                    <div className="mt-2.5 rounded-lg bg-amber-50/70 border border-amber-200/80 p-3 text-xs text-amber-950">
+                      <p className="font-semibold text-amber-900 mb-1 flex items-center gap-1">
+                        <span>💬</span> Mensagem de Apresentação do Candidato:
+                      </p>
+                      <p className="whitespace-pre-line leading-relaxed italic text-slate-800">
+                        &ldquo;{item.mensagem}&rdquo;
+                      </p>
+                    </div>
+
+                    <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600">
+                      <div>
+                        <span><strong>Cidade:</strong> {item.candidato.cidade}{item.candidato.uf ? `/${item.candidato.uf}` : ''}</span>
+                        <span className="mx-2">&bull;</span>
+                        <span><strong>E-mail:</strong> {item.candidato.email}</span>
+                        <span className="mx-2">&bull;</span>
+                        <span><strong>Telefone:</strong> {item.candidato.telefone}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => baixarPdf(item.candidato as any)}
+                        className="rounded-md bg-singreen px-2.5 py-1 text-xs font-semibold text-white hover:bg-emerald-700 transition"
+                      >
+                        Baixar Currículo (PDF)
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => setModalCandidaturasVaga(null)}
+                  className="rounded-lg border border-slate-300 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Fechar
+                </button>
+              </div>
             </div>
           </div>,
           document.body

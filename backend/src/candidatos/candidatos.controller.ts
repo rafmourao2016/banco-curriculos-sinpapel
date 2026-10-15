@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Header, Ip, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Header, Ip, Param, Patch, Post, Query, Req, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { CandidatosService } from './candidatos.service';
 import { CriarCandidatoDto } from './dto/criar-candidato.dto';
@@ -63,5 +63,21 @@ export class CandidatosController {
   @Delete('me')
   excluirConta(@Req() req: any) {
     return this.candidatosService.excluirConta(req.candidatoId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('vagas-disponiveis')
+  listarVagasDisponiveis(@Req() req: any) {
+    return this.candidatosService.listarVagasDisponiveis(req.candidatoId);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('vagas/:vagaId/candidatar')
+  candidatarVaga(
+    @Req() req: any,
+    @Param('vagaId') vagaId: string,
+    @Body('mensagem') mensagem: string,
+  ) {
+    return this.candidatosService.candidatarVaga(req.candidatoId, vagaId, mensagem);
   }
 }

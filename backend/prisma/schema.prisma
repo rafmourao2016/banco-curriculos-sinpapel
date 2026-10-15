@@ -56,6 +56,7 @@ model Candidato {
   logsVisualizacao       LogVisualizacao[]
   notificacoes           Notificacao[]
   termoConsentimento     TermoConsentimento?
+  candidaturas           CandidaturaVaga[]
 
   @@map("candidatos")
 }
@@ -165,8 +166,22 @@ model VagaNecessidade {
   requisitos   String
   imagemUrl    String?  @map("imagem_url")
   ativa        Boolean  @default(true)
+  candidaturas CandidaturaVaga[]
 
   @@map("vagas_necessidade")
+}
+
+model CandidaturaVaga {
+  id           String          @id @default(uuid()) @db.Uuid
+  vagaId       String          @map("vaga_id") @db.Uuid
+  vaga         VagaNecessidade @relation(fields: [vagaId], references: [id], onDelete: Cascade)
+  candidatoId  String          @map("candidato_id") @db.Uuid
+  candidato    Candidato       @relation(fields: [candidatoId], references: [id], onDelete: Cascade)
+  mensagem     String
+  dataEnvio    DateTime        @default(now()) @map("data_envio")
+
+  @@unique([vagaId, candidatoId])
+  @@map("candidaturas_vaga")
 }
 
 model StatusContratacao {
