@@ -3,10 +3,16 @@
 import { FormEvent, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { anosExperienciaOptions, areaPretendidaOptions, escolaridadeOptions, pretensaoSalarialOptions, turnoOptions } from '../../lib/cadastroSchema';
 import { apenasDigitos, cnpjValido } from '../../lib/documentos';
 import { Localidade } from '../../components/Localidade';
 import { ContadorCurriculos } from '../components/contador-curriculos';
+
+const JobVideoModal = dynamic(
+  () => import('../../components/remotion/JobVideoModal').then((mod) => mod.JobVideoModal),
+  { ssr: false }
+);
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3001';
 const inputClasses = 'w-full rounded-lg border border-slate-300 bg-white px-4 py-3 text-sm outline-none focus:border-brand-600 focus:ring-4 focus:ring-brand-600/10';
@@ -210,6 +216,7 @@ export default function EmpresaPage() {
   const [modalCandidaturasVaga, setModalCandidaturasVaga] = useState<Vaga | null>(null);
   const [candidaturasVaga, setCandidaturasVaga] = useState<CandidaturaItem[]>([]);
   const [carregandoCandidaturas, setCarregandoCandidaturas] = useState(false);
+  const [modalVideoVaga, setModalVideoVaga] = useState<Vaga | null>(null);
   const inputImagemVagaRef = useRef<HTMLInputElement>(null);
   const formBuscaRef = useRef<HTMLFormElement>(null);
   const [formResetKey, setFormResetKey] = useState(0);
@@ -1040,7 +1047,23 @@ export default function EmpresaPage() {
               </form>
 
               <div className="grid content-start gap-3">
-                <h3 className="text-lg font-semibold text-slate-900">Necessidades cadastradas</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-semibold text-slate-900">Necessidades cadastradas</h3>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setModalVideoVaga({
+                        id: 'custom',
+                        area: 'Operador de Produção Industrial',
+                        requisitos: 'Ensino Médio • Disponibilidade de horário • Trabalho em equipe',
+                        ativa: true,
+                      })
+                    }
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-purple-300 bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-900 hover:bg-purple-100 transition shadow-2xs"
+                  >
+                    <span>🎬</span> Criar Vídeo Card Avulso
+                  </button>
+                </div>
                 {vagas.map((vaga) => (
                   <div key={vaga.id} className="flex flex-col sm:flex-row items-start justify-between gap-4 rounded-xl border border-slate-200 p-3.5 text-sm bg-slate-50/60 hover:bg-white transition shadow-2xs">
                     {vaga.imagemUrl && (
@@ -1068,13 +1091,21 @@ export default function EmpresaPage() {
                         )}
                       </div>
                       <p className="mt-1.5 text-slate-700 break-words text-xs leading-relaxed whitespace-pre-line">{vaga.requisitos}</p>
-                      <div className="mt-2.5 flex items-center gap-2">
+                      <div className="mt-2.5 flex flex-wrap items-center gap-2">
                         <button
                           type="button"
                           onClick={() => abrirModalCandidaturas(vaga)}
                           className="inline-flex items-center gap-1.5 rounded-lg border border-brand-300 bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-800 hover:bg-brand-100 transition cursor-pointer shadow-2xs"
                         >
                           <span>📩</span> Candidatos interessados ({vaga._count?.candidaturas ?? 0})
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setModalVideoVaga(vaga)}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-900 hover:bg-purple-100 transition cursor-pointer shadow-2xs"
+                          title="Gerar card animado em vídeo com QR Code para Stories e WhatsApp"
+                        >
+                          <span>🎬</span> Gerar Vídeo / Stories
                         </button>
                       </div>
                     </div>
@@ -1516,6 +1547,15 @@ export default function EmpresaPage() {
             </div>
           </div>,
           document.body
+        )}
+
+        {modalVideoVaga && (
+          <JobVideoModal
+            vaga={modalVideoVaga}
+            empresaNome={empresaNome || 'Empresa Associada SINPAPEL'}
+            aberto={Boolean(modalVideoVaga)}
+            aoFechar={() => setModalVideoVaga(null)}
+          />
         )}
       </div>
     </main>
