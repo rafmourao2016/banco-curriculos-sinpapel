@@ -10,16 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install PostgreSQL client
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client openssl
+      - name: Install PostgreSQL 17 client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-common openssl
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y postgresql-client-17
       - name: Create encrypted backup
         env:
           DIRECT_URL: ${{ secrets.DIRECT_URL }}
           BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
         run: |
+          set -euo pipefail
           mkdir -p backups
           PLAIN="backups/sinpapel-$(date +%Y%m%d-%H%M%S).dump"
-          pg_dump "$DIRECT_URL" --format=custom --file="$PLAIN"
+          /usr/lib/postgresql/17/bin/pg_dump "$DIRECT_URL" --format=custom --file="$PLAIN"
           openssl enc -aes-256-cbc -salt -pbkdf2 -in "$PLAIN" -out "$PLAIN.enc" -pass "pass:$BACKUP_PASSPHRASE"
           rm "$PLAIN"
       - uses: actions/upload-artifact@v4
