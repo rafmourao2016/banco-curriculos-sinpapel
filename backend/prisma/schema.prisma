@@ -116,7 +116,7 @@ model TermoConsentimento {
 model Empresa {
   id               String   @id @default(uuid()) @db.Uuid
   razaoSocial      String   @map("razao_social")
-  cnpj             String   @unique
+  cnpj             String
   email            String   @unique
   senhaHash        String   @map("senha_hash")
   statusAprovacao  String   @default("pendente") @map("status_aprovacao")
@@ -131,6 +131,7 @@ model Empresa {
   logsVisualizacao      LogVisualizacao[]
   apiKeys               EmpresaApiKey[]
 
+  @@index([cnpj])
   @@map("empresas")
 }
 

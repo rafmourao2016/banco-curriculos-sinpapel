@@ -73,13 +73,15 @@ create table if not exists termos_consentimento (
 create table if not exists empresas (
   id uuid primary key default gen_random_uuid(),
   razao_social text not null,
-  cnpj text not null unique,
+  cnpj text not null,
   email text not null unique,
   senha_hash text not null,
   status_aprovacao text not null default 'pendente',
   two_fa_ativo boolean not null default false,
   two_fa_secret text
 );
+
+create index if not exists empresas_cnpj_idx on empresas(cnpj);
 
 create table if not exists usuarios_empresa (
   id uuid primary key default gen_random_uuid(),

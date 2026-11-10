@@ -69,11 +69,12 @@ export class EmpresasService {
       throw new BadRequestException('CNPJ invalido. Confira o numero informado.');
     }
 
+    const emailLimpo = dto.email.trim();
     const existente = await this.prisma.empresa.findFirst({
-      where: { OR: [{ cnpj }, { cnpj: dto.cnpj }, { email: dto.email }] },
+      where: { email: { equals: emailLimpo, mode: 'insensitive' } },
     });
     if (existente) {
-      throw new ConflictException('Ja existe uma empresa cadastrada com este CNPJ ou e-mail.');
+      throw new ConflictException('Ja existe um acesso de empresa cadastrado com este e-mail.');
     }
 
     const senhaHash = await argon2.hash(dto.senha);
@@ -81,13 +82,13 @@ export class EmpresasService {
       data: {
         razaoSocial: dto.razaoSocial,
         cnpj,
-        email: dto.email,
+        email: emailLimpo,
         senhaHash,
         statusAprovacao: 'pendente',
         usuarios: {
           create: {
             nome: dto.razaoSocial,
-            email: dto.email,
+            email: emailLimpo,
             papel: 'admin_empresa',
           },
         },
