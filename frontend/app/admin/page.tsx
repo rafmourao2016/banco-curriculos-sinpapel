@@ -565,6 +565,68 @@ export default function AdminPage() {
     }
   }
 
+  function exportarContatosExcel() {
+    if (candidatosExibidos.length === 0) {
+      setErro('Nenhum currículo encontrado no filtro atual para exportar.');
+      return;
+    }
+
+    const escapeXml = (valor: unknown) =>
+      String(valor ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+
+    const rowXml = (values: string[], isHeader = false) =>
+      `<Row>${values
+        .map(
+          (val) =>
+            `<Cell${isHeader ? ' ss:StyleID="Header"' : ''}><Data ss:Type="String">${escapeXml(val)}</Data></Cell>`
+        )
+        .join('')}</Row>`;
+
+    const linhas = [
+      rowXml(['Nome', 'E-mail', 'Telefone'], true),
+      ...candidatosExibidos.map((c) =>
+        rowXml([c.nome ?? '', c.email ?? '', formatarTelefone(c.telefone ?? '')])
+      ),
+    ];
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+ <Styles>
+  <Style ss:ID="Header">
+   <Font ss:Bold="1"/>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Contatos Candidatos">
+  <Table>
+   <Column ss:Width="240"/>
+   <Column ss:Width="220"/>
+   <Column ss:Width="130"/>
+   ${linhas.join('\n   ')}
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const sufixoCidade = filtroCidade.trim()
+      ? `-${filtroCidade.trim().toLowerCase().replace(/\s+/g, '-')}`
+      : '';
+    link.download = `contatos-candidatos-${filtroStatusCandidato}${sufixoCidade}.xls`;
+    link.click();
+    window.URL.revokeObjectURL(url);
+    setMensagem(`Planilha exportada com ${candidatosExibidos.length} contato(s) (Nome, E-mail e Telefone).`);
+  }
+
   // Navegações e filtros via clique nos cards
   function selecionarFiltroCandidatos(status: 'todos' | 'ativos' | 'inativos') {
     setFiltroStatusCandidato(status);
@@ -1485,7 +1547,16 @@ export default function AdminPage() {
               <h2 className="text-xl font-semibold text-slate-950">Base de Currículos</h2>
               <p className="text-sm text-slate-600">Consulte, filtre por status e gerencie os candidatos cadastrados.</p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={exportarContatosExcel}
+                disabled={carregando || candidatosExibidos.length === 0}
+                title="Baixar planilha Excel (.xls) contendo Nome, E-mail e Telefone dos candidatos listados no filtro atual"
+                className="rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs transition hover:bg-emerald-700 disabled:opacity-60 cursor-pointer"
+              >
+                📥 Exportar Contatos Excel ({candidatosExibidos.length})
+              </button>
               <button
                 type="button"
                 onClick={() => void carregarCandidatos()}
