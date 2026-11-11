@@ -589,7 +589,7 @@ export default function AdminPage() {
     const linhas = [
       rowXml(['Nome', 'E-mail', 'Telefone'], true),
       ...candidatosExibidos.map((c) =>
-        rowXml([c.nome ?? '', c.email ?? '', formatarTelefone(c.telefone ?? '')])
+        rowXml([c.nome ?? '', c.email ?? '', c.telefone ?? ''])
       ),
     ];
 
