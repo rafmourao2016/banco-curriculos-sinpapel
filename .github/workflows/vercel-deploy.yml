@@ -1,0 +1,42 @@
+name: Deploy Sinpapel Frontend to Vercel (09109376-1001)
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/vercel-deploy.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Normalize commit author for Vercel Hobby team
+        run: |
+          git config user.name "09109376-1001"
+          git config user.email "09109376@senaimgdocente.com.br"
+          git commit --amend --reset-author --no-edit || true
+
+      - name: Setup Vercel CLI & Auth
+        env:
+          VERCEL_AUTH_JSON: ${{ secrets.VERCEL_AUTH_JSON }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          npm install --global vercel@latest
+          mkdir -p /tmp/vc-auth .vercel
+          echo "$VERCEL_AUTH_JSON" > /tmp/vc-auth/auth.json
+          printf '{"projectId":"%s","orgId":"%s"}' "$VERCEL_PROJECT_ID" "$VERCEL_ORG_ID" > .vercel/project.json
+
+      - name: Deploy to Vercel Production
+        run: |
+          URL=$(vercel deploy --prod --yes -Q /tmp/vc-auth)
+          echo "Deployed to $URL"
+          vercel alias set "$URL" sinpapel.vercel.app -Q /tmp/vc-auth
